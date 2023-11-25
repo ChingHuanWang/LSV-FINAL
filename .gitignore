@@ -1,5 +1,6 @@
 release/
 *.o
+demo
 lib/libabc.a
 lib/libgenaag.a
 circuit_1.aag
