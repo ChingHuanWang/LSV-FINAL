@@ -1,0 +1,12 @@
+release/
+*.o
+lib/libabc.a
+lib/libgenaag.a
+circuit_1.aag
+dofile/
+aigToAag/
+tests.err/
+tests.fraig/
+abc.history
+FraigProject.pdf
+SelfCheck
