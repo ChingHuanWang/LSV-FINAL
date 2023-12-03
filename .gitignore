@@ -1,4 +1,5 @@
 release/
+build/*
 *.o
 demo
 lib/libabc.a
@@ -11,3 +12,4 @@ tests.fraig/
 abc.history
 FraigProject.pdf
 SelfCheck
+token.txt

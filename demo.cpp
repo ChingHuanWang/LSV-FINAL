@@ -1,7 +1,6 @@
 #include <iostream>
 #include <stdio.h>
-#include "src/util/genAag.h"
-#include <cstring>
+#include "genAag.h"
 using namespace std;
 
 
