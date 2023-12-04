@@ -4,7 +4,7 @@ project(bmatch)
 add_subdirectory(src/util)
 add_subdirectory(src/cir)
 
-add_executable(${PROJECT_NAME} demo.cpp)
+add_executable(${PROJECT_NAME} src/main/bmatch.cpp)
 
 # target_include_directories(${PROJECT_NAME} PUBLIC 
 #     ${PROJECT_SOURCE_DIR}/include/abc
@@ -15,9 +15,9 @@ target_compile_options(${PROJECT_NAME} PRIVATE
     -Wextra
 )
 
-target_link_libraries(${PROJECT_NAME} PRIVATE 
-    util 
+target_link_libraries(${PROJECT_NAME} PRIVATE  
     cir
+    util
     ${PROJECT_SOURCE_DIR}/lib/libcmd.a
     ${PROJECT_SOURCE_DIR}/lib/libgenaag.a
     ${PROJECT_SOURCE_DIR}/lib/libabc.a

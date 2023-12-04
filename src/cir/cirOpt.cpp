@@ -70,7 +70,7 @@ CirAigGate::deleteUnused(vector<CirGate*>& idList)
 }
 
 void
-CirMgr::sweep()
+CirObj::sweep()
 {
    vector<CirGate*> tmp;
    for (CirGate* g : _aigList) 
@@ -144,7 +144,7 @@ CirAigGate::updateFanin(vector<CirGate*>& idList)
    }
    else if (getIn0Gate() == getIn1Gate()) {
       if (isIn0Inv() == isIn1Inv()) reconnect(_in0());
-      else reconnect((size_t)cirMgr->getGate(0));
+      else reconnect( (size_t)cirMgr->getConst0() );
       flag = true;
    }
    // reset in0 in1
@@ -160,7 +160,7 @@ CirAigGate::updateFanin(vector<CirGate*>& idList)
 }
 
 void
-CirMgr::optimize()
+CirObj::optimize()
 {
    CirGate::incrementGlobalRef();
    for (CirGate* g : _dfsList) {
@@ -177,7 +177,7 @@ CirMgr::optimize()
    //       cout << g->getType() << " id = " << g->getId() << " in0 = " << g->getIn0GateV() << " in1 = " << g->getIn1GateV() << endl;
    // }
    for (CirGate* g : _dfsList) {
-      if (_idList[g->getId()]) g->genConnection();
+      if (_idList[g->getId()]) g->genConnection(_objIdx);
       else cirMgr->recycle(g);
    }
    _dfsList.clear();

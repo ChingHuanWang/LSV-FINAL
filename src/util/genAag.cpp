@@ -4,12 +4,11 @@
 #include <cstdio>
 extern "C" int aigToAag(int argc, char** argv);
 
-void genAagFile(string filePath)
+string genAagFile(string filePath)
 {
     size_t start = filePath.find_last_of('/');
     start = start == string::npos ? 0 : start+1;
-    string verFile = filePath.substr(start);
-
+    string verFile = "modified_" + filePath.substr(start);
     genVerFile(filePath, verFile);
     genAigFile(verFile);
 
@@ -30,4 +29,5 @@ void genAagFile(string filePath)
     delete aag;
     remove(verFile.c_str());
     remove(aigFile.c_str());
+    return aagFile;
 }

@@ -64,7 +64,7 @@ CirPoGate::merge(unordered_map<HashKey, CirGate*, HashString>& gateHashTable)
 }
 
 void
-CirMgr::strash()
+CirObj::strash()
 {
    unordered_map<HashKey, CirGate*, HashString> gateHashTable;
 
@@ -75,7 +75,7 @@ CirMgr::strash()
 
    // gen connection
    for (CirGate* g : _dfsList) {
-      if (_idList[g->getId()]) g->genConnection();
+      if (_idList[g->getId()]) g->genConnection(_objIdx);
       else cirMgr->recycle(g);
    }
 
@@ -93,7 +93,7 @@ CirMgr::strash()
 }
 
 void
-CirMgr::fraig()
+CirObj::fraig()
 {
 }
 

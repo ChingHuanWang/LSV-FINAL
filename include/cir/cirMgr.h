@@ -21,18 +21,19 @@ using namespace std;
 #include "cirDef.h"
 #include "fec.h"
 
-extern CirMgr *cirMgr;
+extern CirMgr* cirMgr;
 
 // TODO: Define your own data members and member functions
-class CirMgr
+class CirObj
 {
 public:
-   CirMgr(): _maxVarIdx(0), _const(0), _simLog(0), _fecGrps(new vector<FecGrp>) {}
-   ~CirMgr() { deleteCircuit(); }
+   CirObj(size_t objIdx): _objIdx(objIdx), _maxVarIdx(0), _const(0), _simLog(0), _fecGrps(new vector<FecGrp>) {}
+   ~CirObj() { deleteCircuit(); }
 
    // Access functions
    // return '0' if "gid" corresponds to an undefined gate.
    CirGate* getGate(unsigned gid) const { return _idList[gid]; }
+
 
    // Member functions about circuit construction
    bool readCircuit(const string&);
@@ -73,11 +74,11 @@ public:
    void parseUnused();
    void genConnection();
    void genDfsList();
-   void recycle(CirGate* g) { _recycleList.push_back(g); }
    void deleteCircuit();
    size_t checkGate(size_t);
 
 private:
+   size_t                    _objIdx;
    size_t                    _maxVarIdx;
    CirConstGate*             _const;
    vector<CirGate*>          _idList;
@@ -88,10 +89,34 @@ private:
    vector<CirGate*>          _fltList;
    vector<CirGate*>          _unusedList;
    vector<CirGate*>          _dfsList;
-   vector<CirGate*>          _recycleList;
    ofstream                  *_simLog;
    vector<FecGrp>*           _fecGrps;
 
+};
+
+class CirMgr
+{
+public:
+   CirMgr() 
+   { 
+      _objList.push_back(new CirObj(1)); 
+      _objList.push_back(new CirObj(2));
+      _const = 0;
+   } 
+   ~CirMgr()
+   {
+      deleCircuit();
+   }
+   void deleCircuit();
+   // Member functions about circuit construction
+   bool readCircuit(const string&, const string&);
+   void recycle(CirGate* g) { _recycleList.push_back(g); }
+   CirObj* getCir(size_t idx) const { return _objList[idx-1]; }
+   CirConstGate* getConst0() const { return _const; }
+private:
+   CirConstGate*    _const;
+   vector<CirObj*>  _objList;
+   vector<CirGate*> _recycleList;
 };
 
 #endif // CIR_MGR_H

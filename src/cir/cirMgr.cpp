@@ -1,5 +1,5 @@
 /****************************************************************************
-  FileName     [ cirMgr.cpp ]
+  FileName     [ CirObj.cpp ]
   PackageName  [ cir ]
   Synopsis     [ Define cir manager functions ]
   Author       [ Chung-Yang (Ric) Huang ]
@@ -20,12 +20,12 @@
 
 using namespace std;
 
-// TODO: Implement memeber functions for class CirMgr
+// TODO: Implement memeber functions for class CirObj
 
 /*******************************/
 /*   Global variable and enum  */
 /*******************************/
-CirMgr* cirMgr = 0;
+CirMgr* cirMgr = new CirMgr;
 
 enum CirParseError {
    EXTRA_SPACE,
@@ -60,103 +60,23 @@ static unsigned lineNo = 0;  // in printint, lineNo needs to ++
 // static int errInt;
 // static CirGate *errGate;
 
-// static bool
-// parseError(CirParseError err)
-// {
-//    switch (err) {
-//       case EXTRA_SPACE:
-//          cerr << "[ERROR] Line " << lineNo+1 << ", Col " << colNo+1
-//               << ": Extra space character is detected!!" << endl;
-//          break;
-//       case MISSING_SPACE:
-//          cerr << "[ERROR] Line " << lineNo+1 << ", Col " << colNo+1
-//               << ": Missing space character!!" << endl;
-//          break;
-//       case ILLEGAL_WSPACE: // for non-space white space character
-//          cerr << "[ERROR] Line " << lineNo+1 << ", Col " << colNo+1
-//               << ": Illegal white space char(" << errInt
-//               << ") is detected!!" << endl;
-//          break;
-//       case ILLEGAL_NUM:
-//          cerr << "[ERROR] Line " << lineNo+1 << ": Illegal "
-//               << errMsg << "!!" << endl;
-//          break;
-//       case ILLEGAL_IDENTIFIER:
-//          cerr << "[ERROR] Line " << lineNo+1 << ": Illegal identifier \""
-//               << errMsg << "\"!!" << endl;
-//          break;
-//       case ILLEGAL_SYMBOL_TYPE:
-//          cerr << "[ERROR] Line " << lineNo+1 << ", Col " << colNo+1
-//               << ": Illegal symbol type (" << errMsg << ")!!" << endl;
-//          break;
-//       case ILLEGAL_SYMBOL_NAME:
-//          cerr << "[ERROR] Line " << lineNo+1 << ", Col " << colNo+1
-//               << ": Symbolic name contains un-printable char(" << errInt
-//               << ")!!" << endl;
-//          break;
-//       case MISSING_NUM:
-//          cerr << "[ERROR] Line " << lineNo+1 << ", Col " << colNo+1
-//               << ": Missing " << errMsg << "!!" << endl;
-//          break;
-//       case MISSING_IDENTIFIER:
-//          cerr << "[ERROR] Line " << lineNo+1 << ": Missing \""
-//               << errMsg << "\"!!" << endl;
-//          break;
-//       case MISSING_NEWLINE:
-//          cerr << "[ERROR] Line " << lineNo+1 << ", Col " << colNo+1
-//               << ": A new line is expected here!!" << endl;
-//          break;
-//       case MISSING_DEF:
-//          cerr << "[ERROR] Line " << lineNo+1 << ": Missing " << errMsg
-//               << " definition!!" << endl;
-//          break;
-//       case CANNOT_INVERTED:
-//          cerr << "[ERROR] Line " << lineNo+1 << ", Col " << colNo+1
-//               << ": " << errMsg << " " << errInt << "(" << errInt/2
-//               << ") cannot be inverted!!" << endl;
-//          break;
-//       case MAX_LIT_ID:
-//          cerr << "[ERROR] Line " << lineNo+1 << ", Col " << colNo+1
-//               << ": Literal \"" << errInt << "\" exceeds maximum valid ID!!"
-//               << endl;
-//          break;
-//       case REDEF_GATE:
-//          cerr << "[ERROR] Line " << lineNo+1 << ": Literal \"" << errInt
-//               << "\" is redefined, previously defined as "
-//               << errGate->getTypeStr() << " in line " << errGate->getLineNo()
-//               << "!!" << endl;
-//          break;
-//       case REDEF_SYMBOLIC_NAME:
-//          cerr << "[ERROR] Line " << lineNo+1 << ": Symbolic name for \""
-//               << errMsg << errInt << "\" is redefined!!" << endl;
-//          break;
-//       case REDEF_CONST:
-//          cerr << "[ERROR] Line " << lineNo+1 << ", Col " << colNo+1
-//               << ": Cannot redefine constant (" << errInt << ")!!" << endl;
-//          break;
-//       case NUM_TOO_SMALL:
-//          cerr << "[ERROR] Line " << lineNo+1 << ": " << errMsg
-//               << " is too small (" << errInt << ")!!" << endl;
-//          break;
-//       case NUM_TOO_BIG:
-//          cerr << "[ERROR] Line " << lineNo+1 << ": " << errMsg
-//               << " is too big (" << errInt << ")!!" << endl;
-//          break;
-//       default: break;
-//    }
-//    return false;
-// }
 
 /**************************************************************/
-/*   class CirMgr member functions for circuit construction   */
+/*   class CirObj member functions for circuit construction   */
 /**************************************************************/
 void
-CirMgr::deleteCircuit()
+CirMgr::deleCircuit()
+{
+   for (CirGate* g : _recycleList)
+      delete g;
+   _recycleList.clear();
+}
+
+void
+CirObj::deleteCircuit()
 {
    for (CirGate* g : _idList) 
       if (g) delete g;
-   for (CirGate* g : _recycleList)
-      delete g;
 
    _idList.clear();
    _piList.clear();
@@ -166,11 +86,11 @@ CirMgr::deleteCircuit()
    _fltList.clear();
    _unusedList.clear();
    _dfsList.clear();
-   _recycleList.clear();
+   
 }
 
 void 
-CirMgr::parsePi(ifstream& aag, size_t numIn)
+CirObj::parsePi(ifstream& aag, size_t numIn)
 {
    size_t litIn = 0;
    for (size_t i = 0 ; i < numIn; i++) {
@@ -182,7 +102,7 @@ CirMgr::parsePi(ifstream& aag, size_t numIn)
 }
 
 void 
-CirMgr::parsePo(ifstream& aag, size_t numOut)
+CirObj::parsePo(ifstream& aag, size_t numOut)
 {
    size_t litIn0 = 0;
    for (size_t i = 0; i < numOut; i++) {
@@ -194,7 +114,7 @@ CirMgr::parsePo(ifstream& aag, size_t numOut)
 }
 
 void 
-CirMgr::parseAig(ifstream& aag, size_t numAnd)
+CirObj::parseAig(ifstream& aag, size_t numAnd)
 {
    size_t litIn0 = 0, litIn1 = 0, litAig = 0;
    for (size_t i = 0; i < numAnd; i++) {
@@ -207,7 +127,7 @@ CirMgr::parseAig(ifstream& aag, size_t numAnd)
 }
 
 void
-CirMgr::parseName(ifstream& aag)
+CirObj::parseName(ifstream& aag)
 {
    string tmp;
    while(getline(aag, tmp)){
@@ -221,10 +141,10 @@ CirMgr::parseName(ifstream& aag)
 }
 
 size_t 
-CirMgr::checkGate(size_t litId)
+CirObj::checkGate(size_t litId)
 {
    
-   CirGate* gate = cirMgr -> getGate(litId/2);
+   CirGate* gate = getGate(litId/2);
    size_t gateV = 0, gateId = litId/2;
    if (!gate) {
       _idList[gateId] = new CirUndefGate(gateId, 0);
@@ -237,31 +157,31 @@ CirMgr::checkGate(size_t litId)
 } 
 
 void
-CirPoGate::genConnection()
+CirPoGate::genConnection(size_t idx)
 {
-   _in0 = cirMgr -> checkGate(_in0());
+   _in0 = cirMgr -> getCir(idx) -> checkGate(_in0());
    getIn0Gate() -> addFout((size_t)(this)+_in0.isInv());
 }
 
 void 
-CirAigGate::genConnection()
+CirAigGate::genConnection(size_t idx)
 {
-   _in0 = cirMgr -> checkGate(_in0());
+   _in0 = cirMgr -> getCir(idx) -> checkGate(_in0());
    getIn0Gate() -> addFout((size_t)(this)+_in0.isInv());
-   _in1 = cirMgr -> checkGate(_in1());
+   _in1 = cirMgr -> getCir(idx) -> checkGate(_in1());
    getIn1Gate() -> addFout((size_t)(this)+_in1.isInv());
 }
 
 void
-CirMgr::genConnection()
+CirObj::genConnection()
 {
    for (CirGate* gate : _idList) {
-      if (gate) gate -> genConnection(); 
+      if (gate) gate -> genConnection(_objIdx); 
    }
 }
 
 void 
-CirMgr::parseFlt()
+CirObj::parseFlt()
 {
    for (CirGate* gate : _idList) {
       if(gate && gate->numFltFin()) 
@@ -273,7 +193,7 @@ CirMgr::parseFlt()
 }
 
 void
-CirMgr::parseUnused()
+CirObj::parseUnused()
 {
    for (CirGate* gate : _idList) {
       if (gate && !gate->isPo() 
@@ -287,7 +207,7 @@ CirMgr::parseUnused()
 }
 
 bool
-CirMgr::readCircuit(const string& fileName)
+CirObj::readCircuit(const string& fileName)
 {
    ifstream aag; aag.open(fileName);
    string tmp;
@@ -312,8 +232,16 @@ CirMgr::readCircuit(const string& fileName)
    return true;
 }
 
+bool
+CirMgr::readCircuit(const string& cirFile1, const string& cirFile2)
+{
+   _const = new CirConstGate(0, 0);
+   cirMgr->getCir(1)->readCircuit(cirFile1);
+   cirMgr->getCir(2)->readCircuit(cirFile2);
+}
+
 /**********************************************************/
-/*   class CirMgr member functions for circuit printing   */
+/*   class CirObj member functions for circuit printing   */
 /**********************************************************/
 /*********************
 Circuit Statistics
@@ -399,7 +327,7 @@ CirAigGate::genDfsList(vector<CirGate*>& dfsList)
 }
 
 void 
-CirMgr::genDfsList()
+CirObj::genDfsList()
 {
    CirGate::incrementGlobalRef();
    
@@ -409,7 +337,7 @@ CirMgr::genDfsList()
 }
 
 void
-CirMgr::printSummary() const
+CirObj::printSummary() const
 {
    cout << endl;
    cout << "Circuit Statistics" << endl
@@ -429,7 +357,7 @@ CirMgr::printSummary() const
 }
 
 void
-CirMgr::printNetlist() const
+CirObj::printNetlist() const
 {
    size_t l = 0;
    for (CirGate* gate : _dfsList) {
@@ -440,7 +368,7 @@ CirMgr::printNetlist() const
 }  
 
 void
-CirMgr::printPIs() const
+CirObj::printPIs() const
 {
    cout << "PIs of the circuit:";
    for (CirGate* gate : _piList) {
@@ -450,7 +378,7 @@ CirMgr::printPIs() const
 }
 
 void
-CirMgr::printPOs() const
+CirObj::printPOs() const
 {
    cout << "POs of the circuit:";
    for (CirGate* gate : _poList) {
@@ -460,7 +388,7 @@ CirMgr::printPOs() const
 }
 
 void
-CirMgr::printFloatGates() const
+CirObj::printFloatGates() const
 {
    if (_fltList.size()) {
       cout << "Gates with floating fanin(s):";
@@ -479,7 +407,7 @@ CirMgr::printFloatGates() const
 }
 
 void
-CirMgr::writeAag(ostream& outfile) const
+CirObj::writeAag(ostream& outfile) const
 {
    size_t aigNum = 0;
    for (CirGate* gate : _dfsList) { if (gate->isAig()) { aigNum++; }}
@@ -512,14 +440,14 @@ CirMgr::writeAag(ostream& outfile) const
 
 
 void
-CirMgr::writeGate(ostream& outfile, CirGate *g) const
+CirObj::writeGate(ostream& outfile, CirGate *g) const
 {
 }
 
 
 
 void
-CirMgr::printFECPairs() const
+CirObj::printFECPairs() const
 {
    size_t grpNum = 0;
    for (const FecGrp& grp : *_fecGrps) {

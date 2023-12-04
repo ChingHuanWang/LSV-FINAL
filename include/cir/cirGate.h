@@ -73,7 +73,7 @@ public:
    virtual string getName() const { return ""; }
    virtual void printGate() const = 0;
    virtual void genDfsList(vector<CirGate*>&) = 0;
-   virtual void genConnection() { }
+   virtual void genConnection(size_t) { }
    virtual void deleteUnused(vector<CirGate*>&) { }
    virtual void updateFanin(vector<CirGate*>&) { }
    virtual bool isPi() const { return false; }
@@ -168,7 +168,7 @@ public:
 
    ~CirPoGate() {}
 
-   void genConnection();
+   void genConnection(size_t);
    void genDfsList(vector<CirGate*>&);
    void backwardDfs(int, int, bool);
    void setName(const string& name) { _name = name; }
@@ -203,7 +203,7 @@ public:
 
    ~CirAigGate() {}
 
-   void genConnection();
+   void genConnection(size_t);
    void genDfsList(vector<CirGate*>&);
    void deleteUnused(vector<CirGate*>&);
    void backwardDfs(int, int, bool);

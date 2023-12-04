@@ -1,5 +1,4 @@
 set(SOURCE_FILES
-    cirCmd.cpp
     cirFraig.cpp
     cirGate.cpp
     cirMgr.cpp

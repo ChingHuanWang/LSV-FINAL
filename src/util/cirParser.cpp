@@ -27,6 +27,8 @@ void genVerFile(string inFilePath, string outFileName)
         }
         ss.clear();
     }
+    outFile.close();
+    inFile.close();
     return;
 }
 

@@ -14,8 +14,10 @@
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
+#include <fstream>
 #include "rnGen.h"
 #include "myUsage.h"
+#include "genAag.h"
 
 using namespace std;
 
@@ -74,5 +76,33 @@ size_t getHashSize(size_t s) {
    if (s < 134217728) return 3000017;
    if (s < 536870912) return 5000011;
    return 7000003;
+}
+
+void parseInput(char* inFilePath, vector<string>& cirFileList)
+{
+   ifstream inFile(inFilePath);
+   string cirFilePath, tmp;
+   int M;
+   // circuit 1
+   getline(inFile, cirFilePath);
+   getline(inFile, tmp);
+   M = stoi(tmp);
+   cirFileList.push_back(genAagFile(cirFilePath));
+   for (int i = 0 ; i < M ; i++) {
+      getline(inFile, tmp);
+      // todo: how to store the bus information?
+   }
+
+   // circuit 2
+   getline(inFile, cirFilePath);
+   getline(inFile, tmp);
+   M = stoi(tmp);
+   cirFileList.push_back(genAagFile(cirFilePath));
+   for (int i = 0 ; i < M ; i++) {
+      getline(inFile, tmp);
+      // todo: how to store the bus information?
+   }
+   
+   
 }
 

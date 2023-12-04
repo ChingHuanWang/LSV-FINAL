@@ -66,7 +66,7 @@ CirAigGate::simulate(const CirSimV& simV)
 
 
 void
-CirMgr::simulate(vector<size_t>& word)
+CirObj::simulate(vector<size_t>& word)
 {
    // for (size_t i = 0; i < _piList.size(); i++) 
    //    _piList[i]->simulate(word[i]);
@@ -93,7 +93,7 @@ CirMgr::simulate(vector<size_t>& word)
 }
 
 void 
-CirMgr::writeLog(size_t wordLen)
+CirObj::writeLog(size_t wordLen)
 {
    
    for (size_t i = 0; i < wordLen; i++) {
@@ -111,7 +111,7 @@ CirMgr::writeLog(size_t wordLen)
 
 
 void 
-CirMgr::collectFecGrps()
+CirObj::collectFecGrps()
 {
    vector<FecGrp>* newFecGrps = new vector<FecGrp>;
    for (FecGrp& grp : *_fecGrps) {
@@ -145,13 +145,13 @@ CirMgr::collectFecGrps()
 }
 
 void
-CirMgr::randomSim()
+CirObj::randomSim()
 {
 
 }
 
 void
-CirMgr::fileSim(ifstream& patternFile)
+CirObj::fileSim(ifstream& patternFile)
 {
    string str;
    size_t bitNum = 0, piNum = _piList.size(), wordLen = patternLen;

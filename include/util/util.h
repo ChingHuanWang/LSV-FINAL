@@ -33,6 +33,7 @@ extern char myGetChar();
 // In util.cpp
 extern int listDir(vector<string>&, const string&, const string&);
 extern size_t getHashSize(size_t s);
+extern void parseInput(char*, vector<string>&);
 
 // Other utility template functions
 template<class T>
