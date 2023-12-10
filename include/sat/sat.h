@@ -65,6 +65,23 @@ class SatSolver
          _solver->addClause(lits); lits.clear();
       }
 
+      void addAloCnf(vector<Var>& vars) {
+         vec<Lit> lits;
+         for (size_t i = 0; i < vars.size(); ++i)
+            lits.push(Lit(vars[i]));
+         _solver->addClause(lits); lits.clear();
+      }
+
+      void addAmoCnf(vector<Var>& vars) {
+         vec<Lit> lits;
+         for (size_t i = 0; i < vars.size() - 1; ++i) {
+            for (size_t j = i + 1; j < vars.size(); ++j) {
+               lits.push(~Lit(vars[i])); lits.push(~Lit(vars[j]));
+            }
+            _solver->addClause(lits); lits.clear();
+         }
+      }
+
       // For incremental proof, use "assumeSolve()"
       void assumeRelease() { _assump.clear(); }
       void assumeProperty(Var prop, bool val) {

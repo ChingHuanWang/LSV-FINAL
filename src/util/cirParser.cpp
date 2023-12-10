@@ -13,7 +13,8 @@ void genVerFile(string inFilePath, string outFileName)
     while(getline(inFile, line)) {
         stringstream ss(line);
         ss >> tmp;
-        if (tmp == "module" || tmp == "endmodule" || tmp == "input" || tmp == "output" || tmp == "wire") 
+        if (tmp != "and" && tmp != "or" && tmp != "nand" && tmp != "nor" &&
+            tmp != "not" && tmp != "xor"&& tmp != "xnor" && tmp != "buf")
             outFile << line << endl;
         else {
             outFile << string(4, ' ') << tmp << " ";

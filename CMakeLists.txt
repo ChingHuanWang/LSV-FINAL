@@ -3,6 +3,8 @@ project(bmatch)
 
 add_subdirectory(src/util)
 add_subdirectory(src/cir)
+add_subdirectory(src/match)
+add_subdirectory(src/sat)
 
 add_executable(${PROJECT_NAME} src/main/bmatch.cpp)
 
@@ -16,8 +18,10 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE  
+    match
     cir
     util
+    sat
     ${PROJECT_SOURCE_DIR}/lib/libcmd.a
     ${PROJECT_SOURCE_DIR}/lib/libgenaag.a
     ${PROJECT_SOURCE_DIR}/lib/libabc.a

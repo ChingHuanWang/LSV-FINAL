@@ -5,6 +5,9 @@
         "string_view": "cpp",
         "iostream": "cpp",
         "ostream": "cpp",
-        "new": "cpp"
+        "new": "cpp",
+        "deque": "cpp",
+        "vector": "cpp",
+        "*.tcc": "cpp"
     }
 }

@@ -77,6 +77,9 @@ public:
    void deleteCircuit();
    size_t checkGate(size_t);
 
+   // get Pi, Po size
+   size_t getPoNum() const { return _poList.size(); }
+
 private:
    size_t                    _objIdx;
    size_t                    _maxVarIdx;

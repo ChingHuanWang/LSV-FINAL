@@ -1,0 +1,66 @@
+output solver: solve c, d
+    eq.(1): there must have an output mapping pair
+        sum (c_{i, j}+d_{i, j}) over i, j has to be 1
+
+    eq.(2): for a given g_j, it can only be mapped to only one f_i or not be mapped to anyone
+        (!c_{i, j}+!d_{i, k}) for each j, k
+        (!c_{i, j}+!c_{i, k}) for each j, k
+        (!d_{i, j}+!d_{i, k}) for each j, k
+    
+input solver: solve a, b
+    satisfiable if there exists a input mapping M_I s.t. the output mapping M_O given by output solver is feasible
+
+    eq.(3): map each y_i to 0, 1, or x_j
+        For each i, sum (a_{i, j}+b_{i, j}) over j from 1 to m_I+1 equals to 1.
+        the summation >=1:
+            (a_{i, 1}+b_{i, 1}+...+a_{i, m_I+1}+b_{i, m_I+1}) and
+        the summation <=1:
+            (!a_{i, j}+!b_{i, k}) for each j, k = 1 ~ m_I+1 and
+            (!a_{i, j}+!a_{i, k}) for each j, k = 1 ~ m_I+1 (j is not equal to k) and
+            (!b_{i, j}+!b_{i, k}) for each j, k = 1 ~ m_I+1 (j is not equal to k)
+    
+    eq.(4): check f_i=g_j (!g_j) if c_{j, i} = 1 (d_{j, i}=1)
+        Consider each wire of circuit 1 and 2 as a variable. Take the output of f_i and g_j as v_f, v_g.
+        add AIG constraint
+        c=and(a, b) => (!a+!b+c)(a+!c)(b+!c)
+
+        xor(v_f, v_g)=0 for each c_{j, i}=1 and
+            => (!c_{j, i}+v_f+!v_g)(!c_{j, i}+!v_f+v_g)
+                => (v_f+!v_g)(!v_f+v_g) => v_f=v_g if c_{j, i}=1
+                => (1+v_f+!v_g)(1+!v_f+v_g) if c_{j, i}=0, then v_f can or cannot equal to v_g
+        xor(v_f, !v_g)=0 for each d_{j, i}=1
+            => (!d_{j, i}+v_f+v_g)(!d_{j, i}+!v_f+!v_g)
+
+
+        if c_{j, i}=1, xor(v_f, v_g)=0.
+        sum xor(v_f, v_g)=0 over c_{j, i}=1
+        sum xor(v_f, v_g) over c_{j, i}=1 is satisfiable?
+
+        clause = []
+        for i = 1 to m_O
+            for j = 1 to n_O
+                if (c_{j, i} = 1)
+                    clause.append(?)
+                else if (d_{j, i} = 1)
+                    clause.append(?)
+
+        xor(v_f, v_g)=0 for each c_{j, i}=1 and
+            => (!c_{j, i}+v_f+!v_g)(!c_{j, i}+!v_f+v_g)
+                => (v_f+!v_g)(!v_f+v_g) => v_f=v_g if c_{j, i}=1
+                => (1+v_f+!v_g)(1+!v_f+v_g) if c_{j, i}=0, then v_f can or cannot equal to v_g
+
+                => (1+v_f+!v_g)(1+!v_f+v_g) if c_{j, i}=0, then v_f can or cannot equal to v_g
+        xor(v_f, !v_g)=0 for each d_{j, i}=1
+            => (!d_{j, i}+v_f+v_g)(!d_{j, i}+!v_f+!v_g)
+    
+    eq.(5): check x_i=y_j (!y_j) if a_{j, i}=1 (b_{j, i}=1)
+        xor(x_i, y_j)=0 for each a_{j, i}=1
+            => (!a_{j, i}+!x_i+y_j)(!a_{j, i}+x_i+!y_j)
+        xor(x_i, !y_j)=0 for each b_{j, i}=1
+            => (!b_{j, i}+x_i+y_j)(!b_{j, i}+!x_i+!y_j)
+        if a_{j, m_I+1}=1, then y_j=0
+            => (!a_{j, m_I+1}+!y_j)
+        if b_{j, m_I+1}=1, then y_j=1
+            => (!b_{j, m_I+1}+y_j)
+
+
