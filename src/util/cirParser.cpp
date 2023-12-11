@@ -95,7 +95,7 @@ int genAigFile(string verFile)
 
     //////////////////////////////////////////////////////////////////////////
     // write_aiger
-    string aigFile = verFile.substr(0, verFile.find_first_of('.')) + ".aig";
+    string aigFile = verFile.substr(0, verFile.find_last_of('.')) + ".aig";
     string cmd = string("write_aiger -s ") + string(aigFile);
     sprintf( Command, cmd.c_str() );
     if ( Cmd_CommandExecute( pAbc, Command ) )

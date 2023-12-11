@@ -11,6 +11,7 @@
 
 #include <cassert>
 #include <iostream>
+#include <vector>
 #include "Solver.h"
 
 using namespace std;
@@ -77,9 +78,13 @@ class SatSolver
          for (size_t i = 0; i < vars.size() - 1; ++i) {
             for (size_t j = i + 1; j < vars.size(); ++j) {
                lits.push(~Lit(vars[i])); lits.push(~Lit(vars[j]));
+               _solver->addClause(lits); lits.clear();
             }
-            _solver->addClause(lits); lits.clear();
          }
+      }
+
+      void addCNF(vec<Lit>& lits) {
+         _solver->addClause(lits);
       }
 
       // For incremental proof, use "assumeSolve()"

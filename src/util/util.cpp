@@ -78,31 +78,31 @@ size_t getHashSize(size_t s) {
    return 7000003;
 }
 
-void parseInput(char* inFilePath, vector<string>& cirFileList)
-{
-   ifstream inFile(inFilePath);
-   string cirFilePath, tmp;
-   int M;
-   // circuit 1
-   getline(inFile, cirFilePath);
-   getline(inFile, tmp);
-   M = stoi(tmp);
-   cirFileList.push_back(genAagFile(cirFilePath));
-   for (int i = 0 ; i < M ; i++) {
-      getline(inFile, tmp);
-      // todo: how to store the bus information?
-   }
+// void parseInput(char* inFilePath, vector<string>& cirFileList)
+// {
+//    ifstream inFile(inFilePath);
+//    string cirFilePath, tmp;
+//    int M;
+//    // circuit 1
+//    getline(inFile, cirFilePath);
+//    getline(inFile, tmp);
+//    M = stoi(tmp);
+//    cirFileList.push_back(genAagFile(cirFilePath));
+//    for (int i = 0 ; i < M ; i++) {
+//       getline(inFile, tmp);
+//       // todo: how to store the bus information?
+//    }
 
-   // circuit 2
-   getline(inFile, cirFilePath);
-   getline(inFile, tmp);
-   M = stoi(tmp);
-   cirFileList.push_back(genAagFile(cirFilePath));
-   for (int i = 0 ; i < M ; i++) {
-      getline(inFile, tmp);
-      // todo: how to store the bus information?
-   }
+//    // circuit 2
+//    getline(inFile, cirFilePath);
+//    getline(inFile, tmp);
+//    M = stoi(tmp);
+//    cirFileList.push_back(genAagFile(cirFilePath));
+//    for (int i = 0 ; i < M ; i++) {
+//       getline(inFile, tmp);
+//       // todo: how to store the bus information?
+//    }
    
    
-}
+// }
 

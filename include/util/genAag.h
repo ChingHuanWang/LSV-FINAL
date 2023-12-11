@@ -4,6 +4,6 @@
 #include <string>
 using namespace std;
 
-string genAagFile(string);
+string genAagFile(string, string);
 
 #endif

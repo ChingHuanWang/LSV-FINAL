@@ -94,3 +94,12 @@ isValidVarName(const string& str)
          return false;
    return true;
 }
+
+
+string
+getDirName(const string& str)
+{
+   size_t start = str.find_last_of('/');
+   start = start == string::npos ? 0 : start+1;
+   return str.substr(0, start);
+}

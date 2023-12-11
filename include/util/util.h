@@ -25,6 +25,7 @@ extern size_t myStrGetTok(const string& str, string& tok, size_t pos = 0,
                           const char del = ' ');
 extern bool myStr2Int(const string& str, int& num);
 extern bool isValidVarName(const string& str);
+extern string getDirName(const string& str);
 
 // In myGetChar.cpp
 extern char myGetChar(istream&);
@@ -33,7 +34,7 @@ extern char myGetChar();
 // In util.cpp
 extern int listDir(vector<string>&, const string&, const string&);
 extern size_t getHashSize(size_t s);
-extern void parseInput(char*, vector<string>&);
+// extern void parseInput(char*, vector<string>&);
 
 // Other utility template functions
 template<class T>

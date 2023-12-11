@@ -79,6 +79,10 @@ public:
 
    // get Pi, Po size
    size_t getPoNum() const { return _poList.size(); }
+   size_t getPiNum() const { return _piList.size(); }
+   size_t getGateNum() const { return _dfsList.size(); }
+   vector<CirPoGate*> getPoList() const { return _poList; }
+   vector<CirAigGate*> getAigList() const { return _aigList; }
 
 private:
    size_t                    _objIdx;
