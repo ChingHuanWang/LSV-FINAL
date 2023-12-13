@@ -16,6 +16,8 @@
 #include "cirMgr.h"
 #include "cirGate.h"
 #include "util.h"
+#include "sat.h"
+#include "SolverTypes.h"
 
 
 using namespace std;
@@ -459,4 +461,81 @@ CirObj::printFECPairs() const
       cout << '\n';
       grpNum++;
    }
+}
+
+void
+CirObj::getRedundant(vector<size_t>& input, vector<size_t>& output, vector<vector<bool>>& redundant) {
+
+   assert (_poList.size() == output.size());
+
+   redundant.resize(output.size(), vector<bool>(input.size(), false));
+   // cout << "counter example input:" << endl;
+   // for (size_t i = 0; i < input.size(); ++i) {
+   //    cout << input[i] << " ";
+   // }
+   // cout << endl;
+   // cout << "counter example output:" << endl;
+   // for (size_t i = 0; i < output.size(); ++i) {
+   //    cout << output[i] << " ";
+   // }
+   // cout << endl;
+
+   SatSolver s;
+   Var vf, va, vb;
+   vector<Var> vh(output.size(), 0);
+   vec<Lit> lits;
+   Lit lf, la, lb;
+   size_t i0, i1, num = _dfsList.size();
+
+   s.initialize();
+   for (size_t i = 0; i < num; ++i)
+      s.newVar();
+   
+   for (size_t i = 0; i < _poList.size(); ++i)
+      vh[i] = s.newVar();
+   
+   for (size_t i = 0; i < _aigList.size(); ++i) {
+      vf = _aigList[i]->getId();
+      i0 = _aigList[i]->getIn0LitId();
+      i1 = _aigList[i]->getIn1LitId();
+      va = i0 / 2; vb = i1 / 2;
+      s.addAigCNF(vf, va, i0 & 1, vb, i1 & 1);
+   }
+   for (size_t i = 0; i < _poList.size(); ++i) {
+      vf = _poList[i]->getId(); lf = Lit(vf);
+      i0 = _poList[i]->getIn0LitId();
+      va = i0 / 2; la = (i0 & 1)? ~Lit(va):Lit(va);
+      lits.push(lf); lits.push(~la);
+      s.addCNF(lits); lits.clear();
+      lits.push(~lf); lits.push(la);
+      s.addCNF(lits); lits.clear();
+   }
+   for (size_t i = 0; i < _poList.size(); ++i) {
+      vf = _poList[i]->getId(); lf = (output[i])? ~Lit(vf):Lit(vf);
+      la = ~Lit(vh[i]);
+      lits.push(lf); lits.push(la);
+      s.addCNF(lits); lits.clear();
+   }
+   
+   for (size_t i = 0; i < output.size(); ++i) {
+      for (size_t j = 0; j < input.size(); ++j) {
+         redundant[i][j] = true;
+         s.assumeRelease();
+         s.assumeProperty(vh[i], true);
+         for (size_t k = 0; k < input.size(); ++k) {
+            if (!redundant[i][k]) s.assumeProperty(k + 1, input[k]);
+         }
+         if (s.assumpSolve()) redundant[i][j] = false;
+      }
+   }
+
+   // cout << "redundant set" << endl;
+   // for (size_t i = 0; i < redundant.size(); ++i) {
+   //    for (size_t j = 0; j < redundant[i].size(); ++j) {
+   //       cout << ((redundant[i][j])? 1:0) << " ";
+   //    }
+   //    cout << endl;
+   // }
+
+   // getchar();
 }

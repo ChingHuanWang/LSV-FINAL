@@ -83,6 +83,7 @@ public:
    size_t getGateNum() const { return _dfsList.size(); }
    vector<CirPoGate*> getPoList() const { return _poList; }
    vector<CirAigGate*> getAigList() const { return _aigList; }
+   void getRedundant(vector<size_t>&, vector<size_t>&, vector<vector<bool>>&);
 
 private:
    size_t                    _objIdx;

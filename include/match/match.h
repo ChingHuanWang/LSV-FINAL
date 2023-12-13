@@ -16,10 +16,11 @@ class Match {
 
         int getScore(const vector<vector<Var>>&);
 
-        void outputConstraint();
         void solve();
-        void outputSolverInit();
-        void inputSolverInit();
+        void outputSolverInit(vector<vector<Var>>&, vector<vector<Var>>&, Var&);
+        void inputSolverInit(vector<vector<Var>>&, vector<vector<Var>>&, vector<vector<Var>>&);
+        void printOutputSolverValue(vector<vector<Var>>&, vector<vector<Var>>&, Var&);
+        void printInputSolverValue(vector<vector<Var>>&, vector<vector<Var>>&, vector<vector<Var>>&);
 
         void write();
 

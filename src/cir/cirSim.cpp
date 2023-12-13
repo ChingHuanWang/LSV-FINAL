@@ -78,18 +78,27 @@ CirObj::simulate(vector<size_t>& word)
    //       gate->simulate();
    //    }
    //    else 
-   //       gate->simulate()
-   // }  
+   //       gate->simulate();
+   // }
    
    for (CirGate* gate : _dfsList) {
       if (gate->isAig()) {
+         gate->printGate();
+         printf("%064b\n", gate->isIn0Inv() ? ~(gate->getIn0Gate()->getSimResult()) : gate->getIn0Gate()->getSimResult());
+         printf("%064b\n", gate->isIn1Inv() ? ~(gate->getIn1Gate()->getSimResult()) : gate->getIn1Gate()->getSimResult());
          gate->setSim0(gate->isIn0Inv() ? ~gate->getIn0Gate()->getSimResult() : gate->getIn0Gate()->getSimResult());
          gate->setSim1(gate->isIn1Inv() ? ~gate->getIn1Gate()->getSimResult() : gate->getIn1Gate()->getSimResult());
+         // gate->simulate();
       }
       else if (gate->isPo()) {
+         gate->printGate();
+         printf("%064b\n", gate->isIn0Inv() ? ~(gate->getIn0Gate()->getSimResult()) : gate->getIn0Gate()->getSimResult());
          gate->setSim0(gate->isIn0Inv() ? ~gate->getIn0Gate()->getSimResult() : gate->getIn0Gate()->getSimResult());
       }
-   }    
+      else if (gate->isPi()) {
+         gate->setSim0(word[gate->getId() - 1]);
+      }
+   }
 }
 
 void 
