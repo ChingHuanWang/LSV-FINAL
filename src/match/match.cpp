@@ -92,29 +92,48 @@ int Match::getScore(const vector<vector<Var>>& sol) {
    return score;
 }
 
+void Match::outputConstraint() {
+
+}
+
 void Match::solve() {
    
    // output solver
    size_t poNum[2] = {cirMgr->getCir(1)->getPoNum(), cirMgr->getCir(2)->getPoNum()};
    size_t piNum[2] = {cirMgr->getCir(1)->getPiNum(), cirMgr->getCir(2)->getPiNum()};
+
    vector<vector<Var>> Mo(poNum[1], vector<Var>(poNum[0] * 2, 0));
    vector<vector<Var>> Mi(piNum[1], vector<Var>((piNum[0] + 1) * 2, 0));
+   Var allowProj;
+
+   vec<Lit> lits;
+   Lit lf, la, lb, lc;
+   Var vf, va, vb, vc;
+   size_t i0, i1;
+
    _K = poNum[1] + 1;
    _optimal = (_K + 1) * poNum[1];
    cout << "_K = " << _K << ", _optimal = " << _optimal << endl;
 
-   for (size_t i = 0; i < Mo.size(); ++i) {
-      for (size_t j = 0; j < Mo[i].size(); ++j) {
-         Mo[i][j] = _outputSolver.newVar();
-      }
-   }
-
+   // ==================== output solver variable ====================
+   // 1. output mapping matrix
+   // 2. input mapping matrix
+   // 3. allow projection variable
    for (size_t i = 0; i < Mi.size(); ++i) {
       for (size_t j = 0; j < Mi[i].size(); ++j) {
          Mi[i][j] = _outputSolver.newVar();
       }
    }
 
+   for (size_t i = 0; i < Mo.size(); ++i) {
+      for (size_t j = 0; j < Mo[i].size(); ++j) {
+         Mo[i][j] = _outputSolver.newVar();
+      }
+   }
+   allowProj = _outputSolver.newVar();
+   // ==================== output solver variable ====================
+
+   // ==================== output solver constraint ====================
    for (size_t i = 0; i < Mo.size(); ++i) {
       _outputSolver.addAloCnf(Mo[i]);
       _outputSolver.addAmoCnf(Mo[i]);
@@ -125,25 +144,78 @@ void Match::solve() {
       _outputSolver.addAmoCnf(Mi[i]);
    }
 
-   // if (_outputSolver.solve()) {
-   //    for (size_t j = 0; j < poNum[1]; ++j) {
-   //       for (size_t i = 0; i < poNum[0] * 2; ++i) {
-   //          printf("%5d ", _outputSolver.getValue(Mo[j][i]));
-   //       }
-   //       printf("\n");
-   //    }
-   // }
-   // else {
-   //    printf("unsat\n");
-   // }
+   for (size_t i = 0; i < Mo[0].size(); i += 2) {
+      for (size_t j = 0; j < Mo.size() - 1; ++j) {
+         for (size_t k = j + 1; k < Mo.size(); ++k) {
+            vf = allowProj; lf = Lit(vf);
+            va = Mo[j][i]; la = Lit(va);
+            vb = Mo[k][i]; lb = Lit(vb);
+            lits.push(lf); lits.push(~la); lits.push(~lb);
+            _outputSolver.addCNF(lits); lits.clear();
+         }
+      }
 
-   // ================== input solver ==================
+      for (size_t j = 0; j < Mo.size(); ++j) {
+         for (size_t k = 0; k < Mo.size(); ++k) {
+            vf = allowProj; lf = Lit(vf);
+            va = Mo[j][i]; la = Lit(va);
+            vb = Mo[k][i + 1]; lb = Lit(vb);
+            lits.push(lf); lits.push(~la); lits.push(~lb);
+            _outputSolver.addCNF(lits); lits.clear();
+         }
+      }
+
+      for (size_t j = 0; j < Mo.size() - 1; ++j) {
+         for (size_t k = j + 1; k < Mo.size(); ++k) {
+            vf = allowProj; lf = Lit(vf);
+            va = Mo[j][i + 1]; la = Lit(va);
+            vb = Mo[k][i + 1]; lb = Lit(vb);
+            lits.push(lf); lits.push(~la); lits.push(~lb);
+            _outputSolver.addCNF(lits); lits.clear();
+         }
+      }
+   }
+
+   for (size_t i = 0; i < Mi[0].size(); i += 2) {
+      for (size_t j = 0; j < Mi.size() - 1; ++j) {
+         for (size_t k = j + 1; k < Mi.size(); ++k) {
+            va = Mi[j][i]; la = Lit(va);
+            vb = Mi[k][i]; lb = Lit(vb);
+            lits.push(~la); lits.push(~lb);
+            _outputSolver.addCNF(lits); lits.clear();
+         }
+      }
+
+      for (size_t j = 0; j < Mi.size(); ++j) {
+         for (size_t k = 0; k < Mi.size(); ++k) {
+            va = Mi[j][i]; la = Lit(va);
+            vb = Mi[k][i + 1]; lb = Lit(vb);
+            lits.push(~la); lits.push(~lb);
+            _outputSolver.addCNF(lits); lits.clear();
+         }
+      }
+
+      for (size_t j = 0; j < Mi.size() - 1; ++j) {
+         for (size_t k = j + 1; k < Mi.size(); ++k) {
+            va = Mi[j][i + 1]; la = Lit(va);
+            vb = Mi[k][i + 1]; lb = Lit(vb);
+            lits.push(~la); lits.push(~lb);
+            _outputSolver.addCNF(lits); lits.clear();
+         }
+      }
+   }
+   // ==================== output solver constraint ====================
+
    vector<vector<Var>> mi(piNum[1], vector<Var>((piNum[0] + 1) * 2, 0));
    vector<vector<Var>> h(poNum[1], vector<Var>(poNum[0] * 2, 0));
    vector<vector<Var>> mo(poNum[1], vector<Var>(poNum[0] * 2, 0));
 
-   // for (size_t i = 0; i < cirMgr->getCir(1)-> )
    size_t gateNum[2] = {cirMgr->getCir(1)->getGateNum(), cirMgr->getCir(2)->getGateNum()};
+   // ================== input solver variable ==================
+   // 1. aig constraint
+   // 2. input mapping matrix
+   // 3. intermediate variable h
+   // 4. output mapping matrix
    for (size_t i = 0; i < 2; ++i) {
       for (size_t j = 0; j < gateNum[i]; ++j) {
          _inputSolver.newVar();
@@ -161,7 +233,28 @@ void Match::solve() {
    for (size_t i = 0; i < mo.size(); ++i)
       for (size_t j = 0; j < mo[i].size(); ++j)
          mo[i][j] = _inputSolver.newVar();
+   
+   // cout << "mi:\n";
+   // for (size_t i = 0; i < mi.size(); ++i){
+   //    for (size_t j = 0; j < mi[i].size(); ++j){
+   //       cout << mi[i][j] << " ";
+   //    }
+   //    cout << endl;
+   // }
+   // cout << endl;
+   
+   // cout << "mo:\n";
+   // for (size_t i = 0; i < mo.size(); ++i){
+   //    for (size_t j = 0; j < mo[i].size(); ++j){
+   //       cout << mo[i][j] << " ";
+   //    }
+   //    cout << endl;
+   // }
+   // cout << endl;
+   // getchar();
+   // ================== input solver variable ==================
 
+   // ================== input solver constraint ==================
    for (size_t i = 0; i < mi.size(); ++i) {
       _inputSolver.addAloCnf(mi[i]);
       _inputSolver.addAmoCnf(mi[i]);
@@ -170,10 +263,6 @@ void Match::solve() {
    // circuit 1 AIG constraint
    vector<vector<CirPoGate*>> poList = {cirMgr->getCir(1)->getPoList(), cirMgr->getCir(2)->getPoList()};
    vector<vector<CirAigGate*>> aigList = {cirMgr->getCir(1)->getAigList(), cirMgr->getCir(2)->getAigList()};
-   vec<Lit> lits;
-   Lit lf, la, lb, lc;
-   Var vf, va, vb, vc;
-   size_t i0, i1;
    for (size_t i = 0; i < aigList[0].size(); ++i) {
       // aigList[0][i]->printGate();
       vf = aigList[0][i]->getId();
@@ -281,31 +370,114 @@ void Match::solve() {
       }
    }
    _inputSolver.addCNF(lits); lits.clear();
+   // ================== input solver constraint ==================
 
 
+   // ================== solve ==================
    int optimal = 0, score;
-   vector<vector<int>> resultMo(poNum[1], vector<int>(poNum[0], 0));
-   vector<vector<int>> resultMi(piNum[1], vector<int>(piNum[0], 0));
-   for (size_t x = 0; _outputSolver.solve(); ++x) {
+   bool proj = false;
+   char inputcheck;
+   _outputSolver.assumeRelease();
+   _outputSolver.assumeProperty(allowProj, proj);
 
-      score = getScore(Mo);
+   // cout << "==================== answer ====================" << endl;
+   // vector<vector<int>> answerMo(Mo.size(), vector<int>(Mo[0].size(), 0));
+   // vector<vector<int>> answerMi(Mi.size(), vector<int>(Mi[0].size(), 0));
+   // for (size_t i = 0; i < poNum[1]; ++i) {
+   //    for (size_t j = 0; j < poNum[0]; ++j) {
+   //       if (i == j) answerMo[i][j * 2] = 1;
+   //    }
+   // }
+   // for (size_t i = 0; i < piNum[1]; ++i) {
+   //    for (size_t j = 0; j < piNum[0]; ++j) {
+   //       if (i == j) answerMi[i][j * 2] = 1;
+   //    }
+   // }
+   // answerMi[2][4] = 0; answerMi[2][6] = 1;
+   // answerMi[3][4] = 1; answerMi[3][6] = 0;
+
+   // cout << "Mo:\n";
+   // for (size_t i = 0; i < answerMo.size(); ++i) {
+   //    for (size_t j = 0; j < answerMo[i].size(); ++j) {
+   //       cout << answerMo[i][j] << " ";
+   //    }
+   //    cout << endl;
+   // }
+   // cout << "Mi" << endl;
+   // for (size_t i = 0; i < answerMi.size(); ++i) {
+   //    for (size_t j = 0; j < answerMi[i].size(); ++j) {
+   //       cout << answerMi[i][j] << " ";
+   //    }
+   //    cout << endl;
+   // }
+   // cout << "==================== answer ====================" << endl;
+   
+   _resultMo.resize(poNum[1], vector<int>(poNum[0], 0));
+   _resultMi.resize(piNum[1], vector<int>((piNum[0] + 1) * 2, 0));
+   for (size_t x = 0; optimal != _optimal; ++x) {
+
+      // cout << "==================== correct answer check ====================" << endl;
+      // _outputSolver.assumeRelease();
+      // _outputSolver.assumeProperty(allowProj, proj);
+      // for (size_t j = 0; j < mo.size(); ++j) {
+      //    for (size_t i = 0; i < mo[j].size(); ++i) {
+      //       vf = Mo[j][i];
+      //       _outputSolver.assumeProperty(vf, answerMo[j][i]);
+      //    }
+      // }
+
+      // for (size_t j = 0; j < mi.size(); ++j) {
+      //    for (size_t i = 0; i < mi[j].size(); ++i) {
+      //       vf = Mi[j][i];
+      //       _outputSolver.assumeProperty(vf, answerMi[j][i]);
+      //    }
+      // }
+      // if (_outputSolver.assumpSolve()) {
+      //    cout << "SAT" << endl;
+      // }
+      // else {
+      //    cout << "There exists some problem" << endl;
+      //    getchar();
+      // }
+      // _outputSolver.assumeRelease();
+      // _outputSolver.assumeProperty(allowProj, proj);
+      // cout << "==================== correct answer check ====================" << endl;
+
+      if (_outputSolver.assumpSolve()) score = getScore(Mo);
+      else {
+         cout << "unsat" << endl;
+         cout << score << endl;
+         if (!proj) {
+            cout << "allow projection\n";
+            getchar();
+            proj = true;
+            _outputSolver.assumeRelease();
+            _outputSolver.assumeProperty(allowProj, proj);
+            continue;
+         }
+         else break;
+      }
+
+      cout << "x = " << x << ", optimal = " << optimal << ", score = " << score << endl;
       if (score <= optimal) continue;
-      // cout << "x = " << x << ", optimal = " << optimal << endl;
 
-      // cout << "output solver:\n";
-      // for (size_t i = 0; i < Mi.size(); ++i) {
-      //    for (size_t j = 0; j < Mi[i].size(); ++j) {
-      //       cout << Mi[i][j] << ": " << _outputSolver.getValue(Mi[i][j]) << " ";
-      //    }
-      //    cout << endl;
-      // }
-      // for (size_t i = 0; i < Mo.size(); ++i) {
-      //    for (size_t j = 0; j < Mo[i].size(); ++j) {
-      //       cout << Mo[i][j] << ": " << _outputSolver.getValue(Mo[i][j]) << " ";
-      //    }
-      //    cout << endl;
-      // }
-      // cout << endl;
+      // check mapping matrix
+      cout << "==================== variable of output solver ====================" << endl;
+      cout << "input mapping matrix:\n";
+      for (size_t i = 0; i < Mi.size(); ++i) {
+         for (size_t j = 0; j < Mi[i].size(); ++j) {
+            cout << _outputSolver.getValue(Mi[i][j]) << " ";
+         }
+         cout << endl;
+      }
+      cout << "output mapping matrix:\n";
+      for (size_t i = 0; i < Mo.size(); ++i) {
+         for (size_t j = 0; j < Mo[i].size(); ++j) {
+            cout << _outputSolver.getValue(Mo[i][j]) << " ";
+         }
+         cout << endl;
+      }
+      cout << "==================== variable of output solver ====================" << endl;
 
       _inputSolver.assumeRelease();
       for (size_t j = 0; j < mo.size(); ++j) {
@@ -325,51 +497,54 @@ void Match::solve() {
       if (!_inputSolver.assumpSolve()) {
          optimal = score;
          cout << "step:" << x << ", unsat, optimal = " << optimal << endl;
+
          for (size_t j = 0; j < Mo.size(); ++j) {
             for (size_t i = 0; i < Mo[j].size(); ++i) {
-               resultMo[j][i] = _outputSolver.getValue(Mo[j][i]);
+               _resultMo[j][i] = _outputSolver.getValue(Mo[j][i]);
             }
          }
 
          for (size_t j = 0; j < Mi.size(); ++j) {
             for (size_t i = 0; i < Mi[j].size(); ++i) {
-               resultMi[j][i] = _outputSolver.getValue(Mi[j][i]);
+               _resultMi[j][i] = _outputSolver.getValue(Mi[j][i]);
             }
          }
       }
-      // else {
-      //    cout << "input solver" << endl;
-      //    int count = 0;
-      //    for (size_t i = 0; i < 2; ++i) {
-      //       for (size_t j = 0; j < gateNum[i]; ++j) {
-      //          cout << (count + 1) << ": " << _inputSolver.getValue(++count) << " ";
-      //       }
-      //       cout << endl;
-      //    }
+      else {
+         // cout << "==================== variable of input solver ====================" << endl;
+         // cout << "AIG" << endl;
+         // int count = 0;
+         // for (size_t i = 0; i < 2; ++i) {
+         //    for (size_t j = 0; j < gateNum[i]; ++j) {
+         //       // cout << (count + 1) << ": " << _inputSolver.getValue(++count) << " ";
+         //       cout << _inputSolver.getValue(++count) << " ";
+         //    }
+         //    cout << endl;
+         // }
+         // cout << "mi" << endl;
+         // for (size_t i = 0; i < mi.size(); ++i) {
+         //    for (size_t j = 0; j < mi[i].size(); ++j) {
+         //       cout << _inputSolver.getValue(mi[i][j]) << " ";
+         //    }
+         //    cout << endl;
+         // }
 
-      //    for (size_t i = 0; i < mi.size(); ++i) {
-      //       for (size_t j = 0; j < mi[i].size(); ++j) {
-      //          cout << mi[i][j] << ": " << _inputSolver.getValue(mi[i][j]) << " ";
-      //       }
-      //       cout << endl;
-      //    }
-
-      //    for (size_t i = 0; i < h.size(); ++i) {
-      //       for (size_t j = 0; j < h[i].size(); ++j) {
-      //          cout << h[i][j] << ": " << _inputSolver.getValue(h[i][j]) << " ";
-      //       }
-      //       cout << endl;
-      //    }
-            
-      //    for (size_t i = 0; i < mo.size(); ++i){
-      //       for (size_t j = 0; j < mo[i].size(); ++j){
-      //          cout << mo[i][j] << ": " << _inputSolver.getValue(mo[i][j]) << " ";
-      //       }
-      //       cout << endl;
-      //    }
-
-      //    cout << endl;
-      // }
+         // cout << "h" << endl;
+         // for (size_t i = 0; i < h.size(); ++i) {
+         //    for (size_t j = 0; j < h[i].size(); ++j) {
+         //       cout << _inputSolver.getValue(h[i][j]) << " ";
+         //    }
+         //    cout << endl;
+         // }
+         // cout << "mo:\n";
+         // for (size_t i = 0; i < mo.size(); ++i){
+         //    for (size_t j = 0; j < mo[i].size(); ++j){
+         //       cout << _inputSolver.getValue(mo[i][j]) << " ";
+         //    }
+         //    cout << endl;
+         // }
+         // cout << "==================== variable of input solver ====================" << endl;
+      }
       // for (size_t j = 0; j < poNum[1]; ++j) {
       //    for (size_t i = 0; i < poNum[0] * 2; ++i) {
       //       printf("%5d ", _outputSolver.getValue(Mo[j][i]));
@@ -377,11 +552,45 @@ void Match::solve() {
       //    printf("\n");
       // }
       // cout << endl;
-
       if (optimal == _optimal) {
          break;
       }
-      // cout << "before" << endl;
+      // cout << "==================== add learned clause ====================" << endl;
+      for (size_t q = 0; q < poList[1].size(); ++q) {
+         for (size_t p = 0; p < poList[0].size(); ++p) {
+            // cout << "p = " << p << ", q = " << q << endl;
+            vf = (_inputSolver.getValue(poList[0][p]->getId()) != _inputSolver.getValue(poList[1][q]->getId() + gateNum[0]))? Mo[q][2 * p]:Mo[q][2 * p + 1];
+            lf = Lit(vf); lits.push(~lf);
+            // cout << "literal: " << vf;
+            for (size_t j = 0; j < piNum[1]; ++j) {
+               for (size_t i = 0; i < piNum[0]; ++i) {
+                  // cout << "i = " << i << ", j = " << j << endl;
+                  va = (_inputSolver.getValue(i + 1) != _inputSolver.getValue(j + 1 + gateNum[0]))? Mi[j][2 * i]:Mi[j][2 * i + 1];
+                  la = Lit(va); lits.push(la);
+                  // cout << " + " << va;
+               }
+            }
+            for (size_t i = 0; i < piNum[1]; ++i) {
+               va = (_inputSolver.getValue(i + 1 + gateNum[0]))? Mi[i][2 * piNum[0]]:Mi[i][2 * piNum[0] + 1];
+               la = Lit(va); lits.push(la);
+               // cout << " + " << va;
+            }
+            // cout << endl;
+            _outputSolver.addCNF(lits); lits.clear();
+         }
+      }
+      // cout << "==================== add learned clause ====================" << endl;
+
+      // for (size_t q = 0; q < poList[1].size(); ++q) {
+      //    for (size_t p = 0; p < poList[0].size(); ++p) {
+      //       vf = (_inputSolver.getValue(poList[0][p]->getId()) != _inputSolver.getValue(poList[1][q]->getId() + gateNum[0]))? Mo[q][2 * p]:Mo[q][2 * p + 1];
+      //       lf = Lit(vf); lits.push(~lf);
+      //       cout << "literal: " << vf << " + ";
+      //       cout << endl;
+      //       _outputSolver.addCNF(lits); lits.clear();
+      //    }
+      // }
+
       for (size_t j = 0; j < Mo.size(); ++j) {
          for (size_t i = 0; i < Mo[j].size(); ++i) {
             vf = Mo[j][i]; lf = (_outputSolver.getValue(Mo[j][i]))? ~Lit(vf):Lit(vf);
@@ -395,15 +604,17 @@ void Match::solve() {
          }
       }
       _outputSolver.addCNF(lits); lits.clear();
-      // cout << "after" << endl;
+      // getchar();
    }
+   // ================== solve ==================
 
+   // ================== show result ==================
    cout << "optimal = " << optimal << endl;
    cout << "final mapping result:" << endl;
    cout << "output:" << endl;
    for (size_t j = 0; j < Mo.size(); ++j) {
       for (size_t i = 0; i < Mo[j].size(); ++i) {
-         cout << resultMo[j][i] << " ";
+         cout << _resultMo[j][i] << " ";
       }
       cout << endl;
    }
@@ -412,11 +623,12 @@ void Match::solve() {
    cout << "input:" << endl;
    for (size_t j = 0; j < Mi.size(); ++j) {
       for (size_t i = 0; i < Mi[j].size(); ++i) {
-         cout << resultMi[j][i] << " ";
+         cout << _resultMi[j][i] << " ";
       }
       cout << endl;
    }
    cout << endl;
+   // ================== show result ==================
    
 
 }
