@@ -20,7 +20,8 @@ using namespace std;
 
 #include "cirDef.h"
 #include "fec.h"
-#include "sat.h"
+
+class SatSolver;
 
 extern CirMgr* cirMgr;
 
@@ -135,7 +136,7 @@ private:
    CirConstGate*        _const;
    vector<CirObj*>      _objList;
    vector<CirGate*>     _recycleList;
-   vector<SatSolver>    _satList;
+   // vector<SatSolver>    _satList;
 };
 
 #endif // CIR_MGR_H
