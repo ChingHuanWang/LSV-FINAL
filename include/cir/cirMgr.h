@@ -85,6 +85,7 @@ public:
    vector<CirPoGate*> getPoList() const { return _poList; }
    vector<CirAigGate*> getAigList() const { return _aigList; }
    void getRedundant(vector<size_t>&, vector<size_t>&, vector<vector<bool>>&);
+   void getFuncSupp();
    void collectStrucSupp();
    void printStrucSupp() const;
 
@@ -114,8 +115,8 @@ public:
       _objList.push_back(new CirObj(1)); 
       _objList.push_back(new CirObj(2));
       _const = 0;
-      _satList.push_back(SatSolver());
-      _satList.push_back(SatSolver());
+      // _satList.push_back(SatSolver());
+      // _satList.push_back(SatSolver());
 
       
    } 

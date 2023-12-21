@@ -118,6 +118,12 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, V
    // ==================== output solver variable ====================
 
    // ==================== output solver constraint ====================
+
+
+   // functional support
+   // cirMgr->getCir(1)->getFuncSupp();
+   // cirMgr->getCir(2)->getFuncSupp();
+
    for (size_t i = 0; i < Mo.size(); ++i) {
       _outputSolver.addAloCnf(Mo[i]);
       _outputSolver.addAmoCnf(Mo[i]);
@@ -210,11 +216,8 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
    // 2. input mapping matrix
    // 3. intermediate variable h
    // 4. output mapping matrix
-   for (size_t i = 0; i < 2; ++i) {
-      for (size_t j = 0; j < gateNum[i]; ++j) {
-         _inputSolver.newVar();
-      }
-   }
+   _inputSolver.addCirCNF(cirMgr->getCir(1), 0);
+   _inputSolver.addCirCNF(cirMgr->getCir(2), gateNum[0]);
 
    for (size_t i = 0; i < mi.size(); ++i)
       for (size_t j = 0; j < mi[i].size(); ++j)
@@ -236,50 +239,50 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
    }
 
    // circuit 1 AIG constraint
-   for (size_t i = 0; i < aigList[0].size(); ++i) {
-      // aigList[0][i]->printGate();
-      vf = aigList[0][i]->getId();
-      i0 = aigList[0][i]->getIn0LitId();
-      i1 = aigList[0][i]->getIn1LitId();
-      va = i0 / 2; vb = i1 / 2;
-      // cout << "vf = " << vf << ", va = " << va << ", inv_a = " << (i0 & 1) << ", vb = " << vb << ", inv_b = " << (i1 & 1) << endl;
-      _inputSolver.addAigCNF(vf, va, i0 & 1, vb, i1 & 1);
-   }
+   // for (size_t i = 0; i < aigList[0].size(); ++i) {
+   //    // aigList[0][i]->printGate();
+   //    vf = aigList[0][i]->getId();
+   //    i0 = aigList[0][i]->getIn0LitId();
+   //    i1 = aigList[0][i]->getIn1LitId();
+   //    va = i0 / 2; vb = i1 / 2;
+   //    // cout << "vf = " << vf << ", va = " << va << ", inv_a = " << (i0 & 1) << ", vb = " << vb << ", inv_b = " << (i1 & 1) << endl;
+   //    _inputSolver.addAigCNF(vf, va, i0 & 1, vb, i1 & 1);
+   // }
 
-   for (size_t i = 0; i < poList[0].size(); ++i) {
-      // poList[0][i]->printGate();
-      vf = poList[0][i]->getId(); lf = Lit(vf);
-      i0 = poList[0][i]->getIn0LitId();
-      va = i0 / 2; la = (i0 & 1)? ~Lit(va):Lit(va);
-      // cout << "vf = " << vf << ", va = " << va << ", inv_a = " << (i0 & 1) << endl;
-      lits.push(lf); lits.push(~la);
-      _inputSolver.addCNF(lits); lits.clear();
-      lits.push(~lf); lits.push(la);
-      _inputSolver.addCNF(lits); lits.clear();
-   }
+   // for (size_t i = 0; i < poList[0].size(); ++i) {
+   //    // poList[0][i]->printGate();
+   //    vf = poList[0][i]->getId(); lf = Lit(vf);
+   //    i0 = poList[0][i]->getIn0LitId();
+   //    va = i0 / 2; la = (i0 & 1)? ~Lit(va):Lit(va);
+   //    // cout << "vf = " << vf << ", va = " << va << ", inv_a = " << (i0 & 1) << endl;
+   //    lits.push(lf); lits.push(~la);
+   //    _inputSolver.addCNF(lits); lits.clear();
+   //    lits.push(~lf); lits.push(la);
+   //    _inputSolver.addCNF(lits); lits.clear();
+   // }
 
    // circuit 2 constraint
-   for (size_t i = 0; i < aigList[1].size(); ++i) {
-      // aigList[1][i]->printGate();
-      vf = aigList[1][i]->getId() + gateNum[0];
-      i0 = aigList[1][i]->getIn0LitId();
-      i1 = aigList[1][i]->getIn1LitId();
-      va = i0 / 2 + gateNum[0]; vb = i1 / 2 + gateNum[0];
-      // cout << "vf = " << vf << ", va = " << va << ", inv_a = " << (i0 & 1) << ", vb = " << vb << ", inv_b = " << (i1 & 1) << endl;
-      _inputSolver.addAigCNF(vf, va, i0 & 1, vb, i1 & 1);
-   }
+   // for (size_t i = 0; i < aigList[1].size(); ++i) {
+   //    // aigList[1][i]->printGate();
+   //    vf = aigList[1][i]->getId() + gateNum[0];
+   //    i0 = aigList[1][i]->getIn0LitId();
+   //    i1 = aigList[1][i]->getIn1LitId();
+   //    va = i0 / 2 + gateNum[0]; vb = i1 / 2 + gateNum[0];
+   //    // cout << "vf = " << vf << ", va = " << va << ", inv_a = " << (i0 & 1) << ", vb = " << vb << ", inv_b = " << (i1 & 1) << endl;
+   //    _inputSolver.addAigCNF(vf, va, i0 & 1, vb, i1 & 1);
+   // }
 
-   for (size_t i = 0; i < poList[1].size(); ++i) {
-      // poList[1][i]->printGate();
-      vf = poList[1][i]->getId() + gateNum[0]; lf = Lit(vf);
-      i0 = poList[1][i]->getIn0LitId();
-      va = i0 / 2 + gateNum[0]; la = (i0 & 1)? ~Lit(va):Lit(va);
-      // cout << "vf = " << vf << ", va = " << va << ", inv_a = " << (i0 & 1) << endl;
-      lits.push(lf); lits.push(~la);
-      _inputSolver.addCNF(lits); lits.clear();
-      lits.push(~lf); lits.push(la);
-      _inputSolver.addCNF(lits); lits.clear();
-   }
+   // for (size_t i = 0; i < poList[1].size(); ++i) {
+   //    // poList[1][i]->printGate();
+   //    vf = poList[1][i]->getId() + gateNum[0]; lf = Lit(vf);
+   //    i0 = poList[1][i]->getIn0LitId();
+   //    va = i0 / 2 + gateNum[0]; la = (i0 & 1)? ~Lit(va):Lit(va);
+   //    // cout << "vf = " << vf << ", va = " << va << ", inv_a = " << (i0 & 1) << endl;
+   //    lits.push(lf); lits.push(~la);
+   //    _inputSolver.addCNF(lits); lits.clear();
+   //    lits.push(~lf); lits.push(la);
+   //    _inputSolver.addCNF(lits); lits.clear();
+   // }
 
    // x_i and y_j pair
    for (size_t j = 0; j < mi.size(); ++j) {

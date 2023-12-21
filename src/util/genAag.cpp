@@ -28,7 +28,7 @@ string genAagFile(string prefix, string filePath)
     aigToAag(c, v);
     delete aig;
     delete aag;
-    remove(verFile.c_str());
+    // remove(verFile.c_str());
     remove(aigFile.c_str());
     return aagFile;
 }

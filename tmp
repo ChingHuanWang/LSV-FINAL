@@ -64,3 +64,10 @@ input solver: solve a, b
             => (!b_{j, m_I+1}+y_j)
 
 
+1 15 31 41 57 61 71 81 91
+
+Cir1 AIG constraint
+Cir2 AIG constraint
+xi=xi* & vH(i)
+(f_{xj} + f_{~xj})(~f_{xj} + ~f_{~xj})=1
+xj=0 & xj*=1

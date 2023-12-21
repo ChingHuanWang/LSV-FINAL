@@ -488,28 +488,29 @@ CirObj::getRedundant(vector<size_t>& input, vector<size_t>& output, vector<vecto
    size_t i0, i1, num = _dfsList.size();
 
    s.initialize();
-   for (size_t i = 0; i < num; ++i)
-      s.newVar();
+   s.addCirCNF(this, 0);
+   // for (size_t i = 0; i < num; ++i)
+   //    s.newVar();
    
    for (size_t i = 0; i < _poList.size(); ++i)
       vh[i] = s.newVar();
    
-   for (size_t i = 0; i < _aigList.size(); ++i) {
-      vf = _aigList[i]->getId();
-      i0 = _aigList[i]->getIn0LitId();
-      i1 = _aigList[i]->getIn1LitId();
-      va = i0 / 2; vb = i1 / 2;
-      s.addAigCNF(vf, va, i0 & 1, vb, i1 & 1);
-   }
-   for (size_t i = 0; i < _poList.size(); ++i) {
-      vf = _poList[i]->getId(); lf = Lit(vf);
-      i0 = _poList[i]->getIn0LitId();
-      va = i0 / 2; la = (i0 & 1)? ~Lit(va):Lit(va);
-      lits.push(lf); lits.push(~la);
-      s.addCNF(lits); lits.clear();
-      lits.push(~lf); lits.push(la);
-      s.addCNF(lits); lits.clear();
-   }
+   // for (size_t i = 0; i < _aigList.size(); ++i) {
+   //    vf = _aigList[i]->getId();
+   //    i0 = _aigList[i]->getIn0LitId();
+   //    i1 = _aigList[i]->getIn1LitId();
+   //    va = i0 / 2; vb = i1 / 2;
+   //    s.addAigCNF(vf, va, i0 & 1, vb, i1 & 1);
+   // }
+   // for (size_t i = 0; i < _poList.size(); ++i) {
+   //    vf = _poList[i]->getId(); lf = Lit(vf);
+   //    i0 = _poList[i]->getIn0LitId();
+   //    va = i0 / 2; la = (i0 & 1)? ~Lit(va):Lit(va);
+   //    lits.push(lf); lits.push(~la);
+   //    s.addCNF(lits); lits.clear();
+   //    lits.push(~lf); lits.push(la);
+   //    s.addCNF(lits); lits.clear();
+   // }
    for (size_t i = 0; i < _poList.size(); ++i) {
       vf = _poList[i]->getId(); lf = (output[i])? ~Lit(vf):Lit(vf);
       la = ~Lit(vh[i]);
@@ -538,6 +539,16 @@ CirObj::getRedundant(vector<size_t>& input, vector<size_t>& output, vector<vecto
    // }
 
    // getchar();
+}
+
+void
+CirObj::getFuncSupp() {
+   collectStrucSupp();
+   printStrucSupp();
+   
+   SatSolver s;
+
+
 }
 
 

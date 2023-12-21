@@ -21,17 +21,15 @@ int main(int argc, char** argv)
     cirMgr->getCir(1)->printNetlist();
     cirMgr->getCir(2)->printNetlist();
 
-    cirMgr->getCir(1)->collectStrucSupp();
-    cirMgr->getCir(2)->collectStrucSupp();
+    // cirMgr->getCir(1)->collectStrucSupp();
+    // cirMgr->getCir(2)->collectStrucSupp();
 
-    cirMgr->getCir(1)->printStrucSupp();
-    cirMgr->getCir(2)->printStrucSupp();
+    // cirMgr->getCir(1)->printStrucSupp();
+    // cirMgr->getCir(2)->printStrucSupp();
     
-    // start = time(NULL);
-    // match->solve();
-    // end = time(NULL);
-    // double diff = difftime(end, start);
-    // cout << "solve time: " << setprecision(6) << fixed << diff << "s" << endl;
-
-
+    start = time(NULL);
+    match->solve();
+    end = time(NULL);
+    double diff = difftime(end, start);
+    cout << "solve time: " << setprecision(6) << fixed << diff << "s" << endl;
 }
