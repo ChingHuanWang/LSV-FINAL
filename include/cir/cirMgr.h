@@ -20,6 +20,7 @@ using namespace std;
 
 #include "cirDef.h"
 #include "fec.h"
+#include "sat.h"
 
 extern CirMgr* cirMgr;
 
@@ -77,13 +78,15 @@ public:
    void deleteCircuit();
    size_t checkGate(size_t);
 
-   // get Pi, Po size
+   // functions for boolean matching
    size_t getPoNum() const { return _poList.size(); }
    size_t getPiNum() const { return _piList.size(); }
    size_t getGateNum() const { return _dfsList.size(); }
    vector<CirPoGate*> getPoList() const { return _poList; }
    vector<CirAigGate*> getAigList() const { return _aigList; }
    void getRedundant(vector<size_t>&, vector<size_t>&, vector<vector<bool>>&);
+   void collectStrucSupp();
+   void printStrucSupp() const;
 
 private:
    size_t                    _objIdx;
@@ -104,12 +107,17 @@ private:
 
 class CirMgr
 {
+
 public:
    CirMgr() 
    { 
       _objList.push_back(new CirObj(1)); 
       _objList.push_back(new CirObj(2));
       _const = 0;
+      _satList.push_back(SatSolver());
+      _satList.push_back(SatSolver());
+
+      
    } 
    ~CirMgr()
    {
@@ -121,10 +129,12 @@ public:
    void recycle(CirGate* g) { _recycleList.push_back(g); }
    CirObj* getCir(size_t idx) const { return _objList[idx-1]; }
    CirConstGate* getConst0() const { return _const; }
+
 private:
-   CirConstGate*    _const;
-   vector<CirObj*>  _objList;
-   vector<CirGate*> _recycleList;
+   CirConstGate*        _const;
+   vector<CirObj*>      _objList;
+   vector<CirGate*>     _recycleList;
+   vector<SatSolver>    _satList;
 };
 
 #endif // CIR_MGR_H

@@ -11,6 +11,7 @@
 
 #include <string>
 #include <vector>
+#include <set>
 #include <iostream>
 #include <bitset>
 #include <unordered_map>
@@ -121,6 +122,11 @@ public:
    vector<CirGateV>& getFoutList() { return _foutList; } 
    static void incrementGlobalRef() { _globalRef++; }
 
+   // function for boolean matching
+   virtual void collectStrucSupp() {};
+   const set<CirGate*>::iterator suppBegin() { return _strucSupp.begin(); }
+   const set<CirGate*>::iterator suppEnd() { return _strucSupp.end(); }
+
 private:
    size_t _id;
    size_t _line;
@@ -130,6 +136,7 @@ private:
 
 protected:
    vector<CirGateV> _foutList;
+   set<CirGate*> _strucSupp;
    // CirSimV _sim0;
    // CirSimV _sim1;
 };
@@ -154,6 +161,9 @@ public:
    void flipToZero(const size_t& val) { _sim0 &= val; }
    size_t getSimResult() const { return _sim0(); }
    size_t getSimBit(const size_t i) { return (_sim0() >> i) & const1; }
+
+   // function for boolean matching
+   void collectStrucSupp();
 
 private:
    string _name;
@@ -187,6 +197,10 @@ public:
    void setSim0(const CirSimV& sim0) { _sim0 = sim0; }
    void simulate(const CirSimV&);
    CirGate* getIn0Gate() const { return _in0.getGate(); }
+
+   // function for boolean matching
+   void collectStrucSupp();
+   void printStrucSupp() const;
 
 private:
    CirGateV _in0;
@@ -230,6 +244,9 @@ public:
    CirGate* getIn1Gate() const { return _in1.getGate(); }
    size_t getSimResult() const { return (_sim0() & _sim1()); }
 
+   // function for boolean matching
+   void collectStrucSupp();
+
 private:
    CirGateV _in0;
    CirGateV _in1;
@@ -250,6 +267,9 @@ public:
    void printGate() const {};
    string getType() const { return "UNDEF"; }
 
+   // function for boolean matching
+   void collectStrucSupp();
+
 private:
    CirSimV _sim0;
 };
@@ -265,6 +285,9 @@ public:
    void updateFanin(vector<CirGate*>&) { clearFouts(); }
    void printGate() const { cout << getType() << "\n"; };
    string getType() const { return "CONST0"; }
+
+   // function for boolean matching
+   void collectStrucSupp();
 
 private:
    CirSimV _sim0;

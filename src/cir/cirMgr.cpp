@@ -539,3 +539,93 @@ CirObj::getRedundant(vector<size_t>& input, vector<size_t>& output, vector<vecto
 
    // getchar();
 }
+
+
+/**********************************************************/
+/* class CirGate member functions for collecting struc supp */
+/**********************************************************/
+
+void 
+CirObj::printStrucSupp() const
+{
+   for (CirPoGate* g : _poList) {
+      cout << "********" << endl;
+      cout << g->getName() << endl;
+      g->printStrucSupp();
+      cout << "********" << endl;
+   }
+}
+
+void
+CirObj::collectStrucSupp()
+{
+   CirGate::incrementGlobalRef();
+   for (CirPoGate* g : _poList) {
+      g->collectStrucSupp();
+   }
+}
+
+void 
+CirPoGate::printStrucSupp() const 
+{
+   for (CirGate* g : _strucSupp) {
+      cout << g->getName() << endl;
+   }
+}
+
+void 
+CirPiGate::collectStrucSupp() 
+{
+   if (!isGlobalRef()) {
+      CirGate::setToGlobalRef();
+      _strucSupp.insert(this);
+   }
+   return;
+}
+
+void 
+CirPoGate::collectStrucSupp()
+{
+   CirGate::setToGlobalRef();
+   if (!isIn0GlobalRef()) {
+      getIn0Gate()->collectStrucSupp();
+   }
+   _strucSupp.insert(getIn0Gate()->suppBegin(), getIn0Gate()->suppEnd());
+   return;
+}
+
+void
+CirAigGate::collectStrucSupp()
+{
+   CirGate::setToGlobalRef();
+   if (!isIn0GlobalRef()) {
+      getIn0Gate()->collectStrucSupp();
+   }
+   if (!isIn1GlobalRef()) {
+      getIn1Gate()->collectStrucSupp();
+   }
+
+   _strucSupp.insert(getIn0Gate()->suppBegin(), getIn0Gate()->suppEnd());
+   _strucSupp.insert(getIn1Gate()->suppBegin(), getIn1Gate()->suppEnd());
+   return;
+}
+
+void
+CirUndefGate::collectStrucSupp()
+{
+   if (!isGlobalRef()) {
+      CirGate::setToGlobalRef();
+      _strucSupp.insert(this);
+   }
+   return;
+}
+
+void 
+CirConstGate::collectStrucSupp()
+{
+   if (!isGlobalRef()) {
+      CirGate::setToGlobalRef();
+      _strucSupp.insert(this);
+   }
+   return;
+}
