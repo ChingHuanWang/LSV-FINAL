@@ -94,10 +94,57 @@ int Match::getScore(const vector<vector<Var>>& sol) {
 
 void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, Var& allowProj) {
 
+   size_t poNum[2] = {cirMgr->getCir(1)->getPoNum(), cirMgr->getCir(2)->getPoNum()};
+   size_t piNum[2] = {cirMgr->getCir(1)->getPiNum(), cirMgr->getCir(2)->getPiNum()};
+   size_t gateNum[2] = {cirMgr->getCir(1)->getGateNum(), cirMgr->getCir(2)->getGateNum()};
+
+   vector<vector<bool>> funcSupp1(poNum[0], vector<bool>(piNum[0], false));
+   vector<vector<bool>> funcSupp2(poNum[1], vector<bool>(piNum[1], false));
+   vector<vector<int>> funcSuppSize(2, vector<int>(poNum[0], 0));
+   int count;
+
    vec<Lit> lits;
    Lit lf, la, lb;
    Var vf, va, vb;
    size_t i0, i1;
+
+   cirMgr->getCir(1)->getFuncSupp(funcSupp1);
+   cirMgr->getCir(2)->getFuncSupp(funcSupp2);
+
+   cout << "========== funcSupp ==========" << endl;
+   for (size_t j = 0; j < funcSupp1.size(); ++j) {
+      for (size_t i = 0; i < funcSupp1[j].size(); ++i) {
+         cout << (funcSupp1[j][i])? 1:0;
+      }
+      cout << endl;
+   }
+   cout << endl;
+   for (size_t j = 0; j < funcSupp2.size(); ++j) {
+      for (size_t i = 0; i < funcSupp2[j].size(); ++i) {
+         cout << (funcSupp2[j][i])? 1:0;
+      }
+      cout << endl;
+   }
+
+   for (size_t j = 0; j < funcSuppSize[0].size(); ++j) {
+      count = 0;
+      for (size_t k = 0; k < funcSupp1[j].size(); ++k)
+         count = (funcSupp1[j][k])? count + 1:count;
+      funcSuppSize[0][j] = count;
+
+      count = 0;
+      for (size_t k = 0; k < funcSupp2[j].size(); ++k)
+         count = (funcSupp2[j][k])? count + 1:count;
+      funcSuppSize[1][j] = count;
+   }
+
+   for (size_t i = 0; i < 2; ++i) {
+      for (size_t j = 0; j < funcSuppSize[i].size(); ++j) {
+         cout << funcSuppSize[i][j] << " ";
+      }
+      cout << endl;
+   }
+   cout << "========== funcSupp ==========" << endl;
 
    // ==================== output solver variable ====================
    // 1. output mapping matrix
@@ -118,11 +165,6 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, V
    // ==================== output solver variable ====================
 
    // ==================== output solver constraint ====================
-
-
-   // functional support
-   // cirMgr->getCir(1)->getFuncSupp();
-   // cirMgr->getCir(2)->getFuncSupp();
 
    for (size_t i = 0; i < Mo.size(); ++i) {
       _outputSolver.addAloCnf(Mo[i]);
@@ -166,32 +208,48 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, V
       }
    }
 
-   for (size_t i = 0; i < Mi[0].size(); i += 2) {
-      for (size_t j = 0; j < Mi.size() - 1; ++j) {
-         for (size_t k = j + 1; k < Mi.size(); ++k) {
-            va = Mi[j][i]; la = Lit(va);
-            vb = Mi[k][i]; lb = Lit(vb);
-            lits.push(~la); lits.push(~lb);
-            _outputSolver.addCNF(lits); lits.clear();
-         }
-      }
+   // for (size_t i = 0; i < Mi[0].size(); i += 2) {
+   //    for (size_t j = 0; j < Mi.size() - 1; ++j) {
+   //       for (size_t k = j + 1; k < Mi.size(); ++k) {
+   //          va = Mi[j][i]; la = Lit(va);
+   //          vb = Mi[k][i]; lb = Lit(vb);
+   //          lits.push(~la); lits.push(~lb);
+   //          _outputSolver.addCNF(lits); lits.clear();
+   //       }
+   //    }
 
-      for (size_t j = 0; j < Mi.size(); ++j) {
-         for (size_t k = 0; k < Mi.size(); ++k) {
-            va = Mi[j][i]; la = Lit(va);
-            vb = Mi[k][i + 1]; lb = Lit(vb);
-            lits.push(~la); lits.push(~lb);
-            _outputSolver.addCNF(lits); lits.clear();
-         }
-      }
+   //    for (size_t j = 0; j < Mi.size(); ++j) {
+   //       for (size_t k = 0; k < Mi.size(); ++k) {
+   //          va = Mi[j][i]; la = Lit(va);
+   //          vb = Mi[k][i + 1]; lb = Lit(vb);
+   //          lits.push(~la); lits.push(~lb);
+   //          _outputSolver.addCNF(lits); lits.clear();
+   //       }
+   //    }
 
-      for (size_t j = 0; j < Mi.size() - 1; ++j) {
-         for (size_t k = j + 1; k < Mi.size(); ++k) {
-            va = Mi[j][i + 1]; la = Lit(va);
-            vb = Mi[k][i + 1]; lb = Lit(vb);
-            lits.push(~la); lits.push(~lb);
+   //    for (size_t j = 0; j < Mi.size() - 1; ++j) {
+   //       for (size_t k = j + 1; k < Mi.size(); ++k) {
+   //          va = Mi[j][i + 1]; la = Lit(va);
+   //          vb = Mi[k][i + 1]; lb = Lit(vb);
+   //          lits.push(~la); lits.push(~lb);
+   //          _outputSolver.addCNF(lits); lits.clear();
+   //       }
+   //    }
+   // }
+
+   for (size_t i = 0; i < funcSuppSize[0].size(); ++i) {
+      for (size_t j = 0; j < funcSuppSize[1].size(); ++j) {
+         if (funcSuppSize[0][i] > funcSuppSize[1][j]) {
+            vf = Mo[j][i * 2]; lf = ~Lit(vf);
+            lits.push(lf);
+            _outputSolver.addCNF(lits); lits.clear();
+            vf = Mo[j][i * 2 + 1]; lf = ~Lit(vf);
+            lits.push(lf);
             _outputSolver.addCNF(lits); lits.clear();
          }
+         // else {
+
+         // }
       }
    }
    // ==================== output solver constraint ====================

@@ -66,28 +66,28 @@ SatSolver::addCirCNF(CirObj *cirObj, const int& dataLift)
     vector<CirPoGate*> poList = cirObj->getPoList();
 
     for (size_t i = 0; i < num; ++i)
-    this->newVar();
+        this->newVar();
     
     for (size_t i = 0; i < aigList.size(); ++i) {
-    // aigList[0][i]->printGate();
-    vf = aigList[i]->getId() + dataLift;
-    i0 = aigList[i]->getIn0LitId();
-    i1 = aigList[i]->getIn1LitId();
-    va = i0 / 2 + dataLift; vb = i1 / 2 + dataLift;
-    // cout << "vf = " << vf << ", va = " << va << ", inv_a = " << (i0 & 1) << ", vb = " << vb << ", inv_b = " << (i1 & 1) << endl;
-    this->addAigCNF(vf, va, i0 & 1, vb, i1 & 1);
+        // aigList[0][i]->printGate();
+        vf = aigList[i]->getId() + dataLift;
+        i0 = aigList[i]->getIn0LitId();
+        i1 = aigList[i]->getIn1LitId();
+        va = i0 / 2 + dataLift; vb = i1 / 2 + dataLift;
+        // cout << "vf = " << vf << ", va = " << va << ", inv_a = " << (i0 & 1) << ", vb = " << vb << ", inv_b = " << (i1 & 1) << endl;
+        this->addAigCNF(vf, va, i0 & 1, vb, i1 & 1);
     }
 
     for (size_t i = 0; i < poList.size(); ++i) {
-    // poList[0][i]->printGate();
-    vf = poList[i]->getId() + dataLift; lf = Lit(vf);
-    i0 = poList[i]->getIn0LitId();
-    va = i0 / 2 + dataLift; la = (i0 & 1)? ~Lit(va):Lit(va);
-    // cout << "vf = " << vf << ", va = " << va << ", inv_a = " << (i0 & 1) << endl;
-    lits.push(lf); lits.push(~la);
-    this->addCNF(lits); lits.clear();
-    lits.push(~lf); lits.push(la);
-    this->addCNF(lits); lits.clear();
+        // poList[0][i]->printGate();
+        vf = poList[i]->getId() + dataLift; lf = Lit(vf);
+        i0 = poList[i]->getIn0LitId();
+        va = i0 / 2 + dataLift; la = (i0 & 1)? ~Lit(va):Lit(va);
+        // cout << "vf = " << vf << ", va = " << va << ", inv_a = " << (i0 & 1) << endl;
+        lits.push(lf); lits.push(~la);
+        this->addCNF(lits); lits.clear();
+        lits.push(~lf); lits.push(la);
+        this->addCNF(lits); lits.clear();
     }
 }
 

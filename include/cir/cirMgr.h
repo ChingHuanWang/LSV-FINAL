@@ -86,7 +86,7 @@ public:
    vector<CirPoGate*> getPoList() const { return _poList; }
    vector<CirAigGate*> getAigList() const { return _aigList; }
    void getRedundant(vector<size_t>&, vector<size_t>&, vector<vector<bool>>&);
-   void getFuncSupp();
+   void getFuncSupp(vector<vector<bool>>&);
    void collectStrucSupp();
    void printStrucSupp() const;
 

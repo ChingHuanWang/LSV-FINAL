@@ -542,13 +542,59 @@ CirObj::getRedundant(vector<size_t>& input, vector<size_t>& output, vector<vecto
 }
 
 void
-CirObj::getFuncSupp() {
+CirObj::getFuncSupp(vector<vector<bool>>& funcSupp) {
+
    collectStrucSupp();
-   printStrucSupp();
+   // printStrucSupp();
    
+   Var vf, va, vb;
+   Lit lf, la, lb;
+   vec<Lit> lits;
+   vector<Var> h(_piList.size(), 0), g(_poList.size(), 0);
+   size_t gateNum = _dfsList.size();
    SatSolver s;
+   s.initialize();
+   s.addCirCNF(this, 0);
+   s.addCirCNF(this, gateNum);
+   for (size_t i = 0; i < h.size(); ++i)
+      h[i] = s.newVar();
+   for (size_t i = 0; i < g.size(); ++i)
+      g[i] = s.newVar();
+   
+   for (size_t i = 0; i < h.size(); ++i) {
+      vf = h[i]; lf = Lit(vf);
+      va = _piList[i]->getId(); la = Lit(va);
+      vb = va + gateNum; lb = Lit(vb);
+      lits.push(lf); lits.push(la); lits.push(~lb);
+      s.addCNF(lits); lits.clear();
+      lits.push(lf); lits.push(~la); lits.push(lb);
+      s.addCNF(lits); lits.clear();
+      lits.push(~lf); lits.push(la); lits.push(lb);
+      s.addCNF(lits); lits.clear();
+      lits.push(~lf); lits.push(~la); lits.push(~lb);
+      s.addCNF(lits); lits.clear();
+   }
 
+   for (size_t i = 0; i < g.size(); ++i) {
+      vf = g[i]; lf = Lit(vf);
+      va = _poList[i]->getId(); la = Lit(va);
+      vb = va + gateNum; lb = Lit(vb);
+      lits.push(~lf); lits.push(la); lits.push(lb);
+      s.addCNF(lits); lits.clear();
+      lits.push(~lf); lits.push(~la); lits.push(~lb);
+      s.addCNF(lits); lits.clear();
+   }
 
+   for (size_t i = 0; i < _poList.size(); ++i) {
+      for (set<CirGate*>::iterator gate = _poList[i]->suppBegin(); gate != _poList[i]->suppEnd(); ++gate) {
+         s.assumeRelease();
+         for (size_t k = 0; k < _poList.size(); ++k)
+            s.assumeProperty(g[k], k == i);
+         for (size_t k = 0; k < _piList.size(); ++k)
+            s.assumeProperty(h[k], k != (*gate)->getId() - 1);
+         if (s.assumpSolve()) funcSupp[i][(*gate)->getId() - 1] = true;
+      }
+   }
 }
 
 

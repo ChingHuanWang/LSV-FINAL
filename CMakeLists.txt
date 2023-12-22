@@ -19,9 +19,9 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 
 target_link_libraries(${PROJECT_NAME} PRIVATE  
     match
+    sat
     cir
     util
-    sat
     ${PROJECT_SOURCE_DIR}/lib/libcmd.a
     ${PROJECT_SOURCE_DIR}/lib/libgenaag.a
     ${PROJECT_SOURCE_DIR}/lib/libabc.a
