@@ -111,21 +111,9 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, V
 
    cirMgr->getCir(1)->collectFuncSupp();
    cirMgr->getCir(2)->collectFuncSupp();
+   cirMgr->getCir(1)->printFuncSupp();
+   cirMgr->getCir(2)->printFuncSupp();
    vector<vector<vector<size_t>>> funcSupp = {cirMgr->getCir(1)->getFuncSupp(), cirMgr->getCir(2)->getFuncSupp()};
-
-   cout << "========== funcSupp ==========" << endl;
-   for (size_t i = 0; i < funcSupp.size(); ++i) {
-      cout << "cir " << i + 1 << ":\n";
-      for (size_t j = 0; j < funcSupp[i].size(); ++j) {
-         cout << funcSupp[i][j].size() << " ";
-         for (size_t k = 0; k < funcSupp[i][j].size(); ++k) {
-            cout << funcSupp[i][j][k] << " ";
-         }
-         cout << endl;
-      }
-   }
-   cout << "========== funcSupp ==========" << endl;
-   getchar();
 
    // ==================== output solver variable ====================
    // 1. output mapping matrix
@@ -246,7 +234,7 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, V
       }
    }
    // ===== functional support constraint =====
-   
+
    // ==================== output solver constraint ====================
 }
 

@@ -600,7 +600,20 @@ CirObj::collectFuncSupp() {
 }
 
 void
-CirObj::collectSymmetry() {
+CirObj::printFuncSupp() const {
+
+   cout << "functional support of cir " << _objIdx << ":\n";
+   for (size_t j = 0; j < _funcSupp.size(); ++j) {
+      cout << _funcSupp[j].size() << " ";
+      for (size_t k = 0; k < _funcSupp[j].size(); ++k) {
+         cout << _funcSupp[j][k] << " ";
+      }
+      cout << endl;
+   }
+}
+
+void
+CirObj::collectSym() {
 
    if (_funcSupp.empty()) collectFuncSupp();
 
@@ -650,16 +663,30 @@ CirObj::collectSymmetry() {
       vector<vector<bool>> sym(_funcSupp[i].size(), vector<bool>(_funcSupp[i].size(), false));
       for (size_t j = 0; j < _funcSupp[i].size() - 1; ++j) {
          for (size_t k = j + 1; k < _funcSupp[i].size(); ++k) {
+
+            if (sym[j][k]) continue;
+
             s.assumeRelease();
             for (size_t l = 0; l < _poList.size(); ++l)
                s.assumeProperty(g[l], l == i);
             for (size_t l = 0; l < _piList.size(); ++l)
                s.assumeProperty(h[l], (l == _funcSupp[i][j] - 1) || (l == _funcSupp[i][k] - 1));
-            if (!s.assumpSolve()) sym[j][k] = true;
+
+            if (!s.assumpSolve()) {
+               sym[j][k] = true;
+               for (size_t l = j + 1; l < _funcSupp[i].size(); ++l) {
+                  if (sym[j][l]) sym[l][k] = true;
+               }
+            }
          }
       }
-      // _funcSupp[i] = tmp;
+      _sym[i] = sym;
    }
+}
+
+void
+CirObj::printSym() const {
+   
 }
 
 
@@ -795,21 +822,6 @@ CirObj::collectUnate()
                }
             }
 
-            for (size_t i = 0 ; i < 3 ; i++){
-               for (CirPoGate* po : subPoList) {
-                  va = po->getVar()+dataLift*i; 
-                  vb = po->getIn0Gate()->getVar()+dataLift*i;
-                  la = po->isIn0Inv() ? ~Lit(va) : Lit(va);
-                  lb = Lit(vb);
-
-                  lits.push(la); lits.push(~lb);
-                  _sat.addCNF(lits); lits.clear();
-                  lits.push(~la); lits.push(lb);
-                  _sat.addCNF(lits); lits.clear();
-               }
-            }
-            
-
             // f_a = f_b bar
             for (CirPoGate* po : subPoList) {
                va = po->getVar(); vb = po->getVar()+dataLift;
@@ -841,24 +853,19 @@ CirObj::collectUnate()
                _sat.assumeProperty(vb, true);
                _sat.assumeProperty(vh, true);
                bool isSat = _sat.assumpSolve();
+               cout << "isSat = " << isSat << endl;
                if(!isSat) {
                   if (unateType == "pos") {
-                     _posUnateTable[g->getName()].insert( {pi->getName(), true});
-                     // _posUnateTable[g->getName()][pi->getName()] = true;
+                     _posUnateTable[g->getName()][pi->getName()] = true;
                   }
                   else {
-                     _negUnateTable[g->getName()].insert( {pi->getName(), true});
+                     _negUnateTable[g->getName()][pi->getName()] = true;
                   }
                }
             }
-           
+
             // reset _sat
             _sat.reset();
-            subAigList.clear();
-            subDfsList.clear();
-            subPoList.clear();
-            subPiList.clear();
-            
          } 
       }
    }

@@ -91,13 +91,14 @@ public:
    void getRedundant(vector<size_t>&, vector<size_t>&, vector<vector<bool>>&);
    void collectStrucSupp();
    void collectFuncSupp();
-   void collectSymmetry();
    void printStrucSupp() const;
+   void printFuncSupp() const;
 
    // functions for constructing unate table and symmetry table
    void collectUnate();
    void printUnate() const;
    void collectSym();
+   void printSym() const;
 
 private:
    size_t                    _objIdx;
@@ -118,8 +119,8 @@ private:
    SatSolver                                               _sat;
    unordered_map<string, unordered_map<string, bool>>      _posUnateTable;
    unordered_map<string, unordered_map<string, bool>>      _negUnateTable;
-   vector<vector<size_t>>           _funcSupp;
-   vector<vector<vector<size_t>>>   _sym;
+   vector<vector<size_t>>                                  _funcSupp;
+   vector<vector<vector<bool>>>                            _sym;
 
 };
 
