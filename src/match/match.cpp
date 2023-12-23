@@ -98,6 +98,7 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, V
    size_t piNum[2] = {cirMgr->getCir(1)->getPiNum(), cirMgr->getCir(2)->getPiNum()};
    size_t gateNum[2] = {cirMgr->getCir(1)->getGateNum(), cirMgr->getCir(2)->getGateNum()};
 
+
    vector<vector<bool>> funcSupp1(poNum[0], vector<bool>(piNum[0], false));
    vector<vector<bool>> funcSupp2(poNum[1], vector<bool>(piNum[1], false));
    vector<vector<int>> funcSuppSize(2, vector<int>(poNum[0], 0));
@@ -108,43 +109,23 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, V
    Var vf, va, vb;
    size_t i0, i1;
 
-   cirMgr->getCir(1)->getFuncSupp(funcSupp1);
-   cirMgr->getCir(2)->getFuncSupp(funcSupp2);
+   cirMgr->getCir(1)->collectFuncSupp();
+   cirMgr->getCir(2)->collectFuncSupp();
+   vector<vector<vector<size_t>>> funcSupp = {cirMgr->getCir(1)->getFuncSupp(), cirMgr->getCir(2)->getFuncSupp()};
 
    cout << "========== funcSupp ==========" << endl;
-   for (size_t j = 0; j < funcSupp1.size(); ++j) {
-      for (size_t i = 0; i < funcSupp1[j].size(); ++i) {
-         cout << (funcSupp1[j][i])? 1:0;
+   for (size_t i = 0; i < funcSupp.size(); ++i) {
+      cout << "cir " << i + 1 << ":\n";
+      for (size_t j = 0; j < funcSupp[i].size(); ++j) {
+         cout << funcSupp[i][j].size() << " ";
+         for (size_t k = 0; k < funcSupp[i][j].size(); ++k) {
+            cout << funcSupp[i][j][k] << " ";
+         }
+         cout << endl;
       }
-      cout << endl;
-   }
-   cout << endl;
-   for (size_t j = 0; j < funcSupp2.size(); ++j) {
-      for (size_t i = 0; i < funcSupp2[j].size(); ++i) {
-         cout << (funcSupp2[j][i])? 1:0;
-      }
-      cout << endl;
-   }
-
-   for (size_t j = 0; j < funcSuppSize[0].size(); ++j) {
-      count = 0;
-      for (size_t k = 0; k < funcSupp1[j].size(); ++k)
-         count = (funcSupp1[j][k])? count + 1:count;
-      funcSuppSize[0][j] = count;
-
-      count = 0;
-      for (size_t k = 0; k < funcSupp2[j].size(); ++k)
-         count = (funcSupp2[j][k])? count + 1:count;
-      funcSuppSize[1][j] = count;
-   }
-
-   for (size_t i = 0; i < 2; ++i) {
-      for (size_t j = 0; j < funcSuppSize[i].size(); ++j) {
-         cout << funcSuppSize[i][j] << " ";
-      }
-      cout << endl;
    }
    cout << "========== funcSupp ==========" << endl;
+   getchar();
 
    // ==================== output solver variable ====================
    // 1. output mapping matrix
@@ -237,21 +218,35 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, V
    //    }
    // }
 
-   for (size_t i = 0; i < funcSuppSize[0].size(); ++i) {
-      for (size_t j = 0; j < funcSuppSize[1].size(); ++j) {
-         if (funcSuppSize[0][i] > funcSuppSize[1][j]) {
-            vf = Mo[j][i * 2]; lf = ~Lit(vf);
-            lits.push(lf);
+   // ===== functional support constraint =====
+   // if |FuncSupp(f_i)| > |FuncSupp(g_j)|, then f_i cannot map to g_j
+   // else { if x_i in FuncSupp(f_i), then x_i is mapped to y_j in FuncSupp(g_j) }
+   for (size_t j = 0; j < poNum[1]; ++j) {
+      for (size_t i = 0; i < poNum[0]; ++i) {
+         if (funcSupp[0][i].size() > funcSupp[1][j].size()) {
+            vf = Mo[j][i * 2]; lf = ~Lit(vf); lits.push(lf);
             _outputSolver.addCNF(lits); lits.clear();
-            vf = Mo[j][i * 2 + 1]; lf = ~Lit(vf);
-            lits.push(lf);
+            vf = Mo[j][i * 2 + 1]; lf = ~Lit(vf); lits.push(lf);
             _outputSolver.addCNF(lits); lits.clear();
          }
          // else {
-
+         //    for (size_t k = 0; k < funcSupp1[i].size(); ++k) {
+         //       if (!funcSupp1[i][k]) continue;
+         //       for (size_t l = 0; l < funcSupp2[j].size(); ++l) {
+         //          if (!funcSupp2[j][l]) continue;
+         //          va = Mi[l][k * 2]; la = Lit(va); lits.push(la);
+         //          vb = Mi[l][k * 2 + 1]; lb = Lit(vb); lits.push(lb);
+         //       }
+         //       vf = Mo[j][i * 2]; lf = Lit(vf); lits.push(~lf);
+         //       _outputSolver.addCNF(lits); lits.pop();
+         //       vf = Mo[j][i * 2 + 1]; lf = Lit(vf); lits.push(~lf);
+         //       _outputSolver.addCNF(lits); lits.clear();
+         //    }
          // }
       }
    }
+   // ===== functional support constraint =====
+   
    // ==================== output solver constraint ====================
 }
 

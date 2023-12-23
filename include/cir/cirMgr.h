@@ -85,26 +85,29 @@ public:
    size_t getGateNum() const { return _dfsList.size(); }
    vector<CirPoGate*> getPoList() const { return _poList; }
    vector<CirAigGate*> getAigList() const { return _aigList; }
+   vector<vector<size_t>> getFuncSupp() const { return _funcSupp; }
    void getRedundant(vector<size_t>&, vector<size_t>&, vector<vector<bool>>&);
-   void getFuncSupp(vector<vector<bool>>&);
    void collectStrucSupp();
+   void collectFuncSupp();
+   void collectSymmetry();
    void printStrucSupp() const;
 
 private:
-   size_t                    _objIdx;
-   size_t                    _maxVarIdx;
-   CirConstGate*             _const;
-   vector<CirGate*>          _idList;
-   vector<CirPiGate*>        _piList;
-   vector<CirPoGate*>        _poList;
-   vector<CirAigGate*>       _aigList;
-   vector<CirUndefGate*>     _undefList;
-   vector<CirGate*>          _fltList;
-   vector<CirGate*>          _unusedList;
-   vector<CirGate*>          _dfsList;
-   ofstream                  *_simLog;
-   vector<FecGrp>*           _fecGrps;
-
+   size_t                           _objIdx;
+   size_t                           _maxVarIdx;
+   CirConstGate*                    _const;
+   vector<CirGate*>                 _idList;
+   vector<CirPiGate*>               _piList;
+   vector<CirPoGate*>               _poList;
+   vector<CirAigGate*>              _aigList;
+   vector<CirUndefGate*>            _undefList;
+   vector<CirGate*>                 _fltList;
+   vector<CirGate*>                 _unusedList;
+   vector<CirGate*>                 _dfsList;
+   ofstream                         *_simLog;
+   vector<FecGrp>*                  _fecGrps;
+   vector<vector<size_t>>           _funcSupp;
+   vector<vector<vector<size_t>>>   _sym;
 };
 
 class CirMgr
