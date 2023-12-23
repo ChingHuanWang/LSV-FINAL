@@ -126,6 +126,8 @@ public:
    virtual void collectStrucSupp() {};
    const set<CirGate*>::iterator suppBegin() { return _strucSupp.begin(); }
    const set<CirGate*>::iterator suppEnd() { return _strucSupp.end(); }
+   void setVar(int v)  { _var = v; }
+   int  getVar() const { return _var; }
 
 private:
    size_t _id;
@@ -136,7 +138,8 @@ private:
 
 protected:
    vector<CirGateV> _foutList;
-   set<CirGate*> _strucSupp;
+   set<CirGate*>    _strucSupp;
+   int              _var;
    // CirSimV _sim0;
    // CirSimV _sim1;
 };
@@ -166,7 +169,7 @@ public:
    void collectStrucSupp();
 
 private:
-   string _name;
+   string  _name;
    CirSimV _sim0;
 };
 

@@ -15,13 +15,14 @@
 #include <fstream>
 #include <iostream>
 #include <bitset>
+#include <unordered_map>
+#include "sat.h"
 
 using namespace std;
 
 #include "cirDef.h"
 #include "fec.h"
 
-class SatSolver;
 
 extern CirMgr* cirMgr;
 
@@ -29,7 +30,8 @@ extern CirMgr* cirMgr;
 class CirObj
 {
 public:
-   CirObj(size_t objIdx): _objIdx(objIdx), _maxVarIdx(0), _const(0), _simLog(0), _fecGrps(new vector<FecGrp>) {}
+   CirObj(size_t objIdx): _objIdx(objIdx), _maxVarIdx(0), _const(0), _simLog(0), _fecGrps(new vector<FecGrp>) 
+   { _sat.initialize(); }
    ~CirObj() { deleteCircuit(); }
 
    // Access functions
@@ -92,36 +94,44 @@ public:
    void collectSymmetry();
    void printStrucSupp() const;
 
+   // functions for constructing unate table and symmetry table
+   void collectUnate();
+   void printUnate() const;
+   void collectSym();
+
 private:
-   size_t                           _objIdx;
-   size_t                           _maxVarIdx;
-   CirConstGate*                    _const;
-   vector<CirGate*>                 _idList;
-   vector<CirPiGate*>               _piList;
-   vector<CirPoGate*>               _poList;
-   vector<CirAigGate*>              _aigList;
-   vector<CirUndefGate*>            _undefList;
-   vector<CirGate*>                 _fltList;
-   vector<CirGate*>                 _unusedList;
-   vector<CirGate*>                 _dfsList;
-   ofstream                         *_simLog;
-   vector<FecGrp>*                  _fecGrps;
+   size_t                    _objIdx;
+   size_t                    _maxVarIdx;
+   CirConstGate*             _const;
+   vector<CirGate*>          _idList;
+   vector<CirPiGate*>        _piList;
+   vector<CirPoGate*>        _poList;
+   vector<CirAigGate*>       _aigList;
+   vector<CirUndefGate*>     _undefList;
+   vector<CirGate*>          _fltList;
+   vector<CirGate*>          _unusedList;
+   vector<CirGate*>          _dfsList;
+   ofstream                  *_simLog;
+   vector<FecGrp>*           _fecGrps;
+
+   // member for solving unate and symmetry 
+   SatSolver                                               _sat;
+   unordered_map<string, unordered_map<string, bool>>      _posUnateTable;
+   unordered_map<string, unordered_map<string, bool>>      _negUnateTable;
    vector<vector<size_t>>           _funcSupp;
    vector<vector<vector<size_t>>>   _sym;
+
 };
 
 class CirMgr
 {
 
 public:
-   CirMgr() 
+   CirMgr()
    { 
       _objList.push_back(new CirObj(1)); 
       _objList.push_back(new CirObj(2));
       _const = 0;
-      // _satList.push_back(SatSolver());
-      // _satList.push_back(SatSolver());
-
       
    } 
    ~CirMgr()
@@ -129,17 +139,23 @@ public:
       deleCircuit();
    }
    void deleCircuit();
+
    // Member functions about circuit construction
    bool readCircuit(const string&, const string&);
    void recycle(CirGate* g) { _recycleList.push_back(g); }
    CirObj* getCir(size_t idx) const { return _objList[idx-1]; }
    CirConstGate* getConst0() const { return _const; }
 
+   // member function about unate and symmetry
+   void collectUnate() { _objList[0]->collectUnate(); _objList[1]->collectUnate(); }
+   void printUnate() const { _objList[0]->printUnate(); _objList[1]->printUnate();}
+
 private:
    CirConstGate*        _const;
    vector<CirObj*>      _objList;
    vector<CirGate*>     _recycleList;
-   // vector<SatSolver>    _satList;
+   vector<vector<int>>  _aigVarList;
+   
 };
 
 #endif // CIR_MGR_H

@@ -751,3 +751,141 @@ CirConstGate::collectStrucSupp()
    }
    return;
 }
+
+/**********************************************************/
+/* class CirMgr member functions for collecting unate var */
+/**********************************************************/
+
+void
+CirObj::collectUnate()
+{
+   
+   vector<CirPiGate*>  subPiList;
+   vector<CirPoGate*>  subPoList;
+   vector<CirAigGate*> subAigList;
+   vector<CirGate*>    subDfsList;
+
+   Var va, vb, vh;
+   Lit la, lb, lh;
+   vec<Lit> lits;
+   vector<string> choice{ "pos", "neg" };
+
+   for (string unateType : choice) {
+      for (CirGate* g : _dfsList) {
+         subDfsList.push_back(g);
+         if (g->isPi()) subPiList.push_back(static_cast<CirPiGate*>(g));
+         else if (g->isAig()) subAigList.push_back(static_cast<CirAigGate*>(g));
+         else {
+            subPoList.push_back(static_cast<CirPoGate*>(g));
+            
+            // setting the var value of the circuit
+            for (size_t i = 0 ; i < subDfsList.size() ; i++)
+               subDfsList[i]->setVar(_sat.newVar());
+
+            // datalift var num for finding unate var
+            int dataLift = subDfsList.size();
+            for (size_t i = 0 ; i < dataLift*2 ; i++)
+               _sat.newVar();
+
+            // gen aig cnf for f_a (i = 0), f_b (i = 1), f_h (i = 2)
+            for (size_t i = 0 ; i < 3 ; i++) {
+               for (CirAigGate* aig : subAigList) {
+                  _sat.addAigCNF(aig->getVar()+dataLift*i, aig->getIn0Gate()->getVar()+dataLift*i, aig->isIn0Inv(),
+                                 aig->getIn1Gate()->getVar()+dataLift*i, aig->isIn1Inv());
+               }
+            }
+
+            for (size_t i = 0 ; i < 3 ; i++){
+               for (CirPoGate* po : subPoList) {
+                  va = po->getVar()+dataLift*i; 
+                  vb = po->getIn0Gate()->getVar()+dataLift*i;
+                  la = po->isIn0Inv() ? ~Lit(va) : Lit(va);
+                  lb = Lit(vb);
+
+                  lits.push(la); lits.push(~lb);
+                  _sat.addCNF(lits); lits.clear();
+                  lits.push(~la); lits.push(lb);
+                  _sat.addCNF(lits); lits.clear();
+               }
+            }
+            
+
+            // f_a = f_b bar
+            for (CirPoGate* po : subPoList) {
+               va = po->getVar(); vb = po->getVar()+dataLift;
+               la = unateType == "pos" ? Lit(va) : ~Lit(va); 
+               lb = unateType == "pos" ? ~Lit(vb) : Lit(vb);
+               lits.push(la);
+               _sat.addCNF(lits); lits.clear();
+               lits.push(lb);
+               _sat.addCNF(lits); lits.clear();
+            }
+
+            // (Va = Vb)+Vh = (Va + ~Vb + Vh)(~Va + Vb + Vh)
+            for (CirPiGate* pi : subPiList) {
+               va = pi->getVar(); vb = va+dataLift; vh = vb+dataLift;
+               la = Lit(va); lb = ~Lit(vb); lh = Lit(vh);
+               lits.push(la); lits.push(lb); lits.push(lh);
+               _sat.addCNF(lits); lits.clear();
+
+               la = ~Lit(va); lb = Lit(vb); lh = Lit(vh);
+               lits.push(la); lits.push(lb); lits.push(lh);
+               _sat.addCNF(lits); lits.clear();
+            }
+
+            // add asumption and solve sat
+            for (CirPiGate* pi : subPiList) {
+               _sat.assumeRelease();
+               va = pi->getVar(); vb = va+dataLift; vh = vb+dataLift;
+               _sat.assumeProperty(va, false);
+               _sat.assumeProperty(vb, true);
+               _sat.assumeProperty(vh, true);
+               bool isSat = _sat.assumpSolve();
+               if(!isSat) {
+                  if (unateType == "pos") {
+                     _posUnateTable[g->getName()].insert( {pi->getName(), true});
+                     // _posUnateTable[g->getName()][pi->getName()] = true;
+                  }
+                  else {
+                     _negUnateTable[g->getName()].insert( {pi->getName(), true});
+                  }
+               }
+            }
+           
+            // reset _sat
+            _sat.reset();
+            subAigList.clear();
+            subDfsList.clear();
+            subPoList.clear();
+            subPiList.clear();
+            
+         } 
+      }
+   }
+}
+
+void 
+CirObj::printUnate() const 
+{
+   cout << "positive case" << endl;
+   for (auto po : _posUnateTable) {
+      cout << po.first << " : ";
+      for (auto pi : po.second) {
+         if (pi.second) {
+            cout << pi.first << " ";
+         }
+      }
+      cout << endl;
+   }
+
+   cout << "negative case" << endl;
+   for (auto po : _negUnateTable) {
+      cout << po.first << " : ";
+      for (auto pi : po.second) {
+         if (pi.second) {
+            cout << pi.first << " ";
+         }
+      }
+      cout << endl;
+   }
+}
