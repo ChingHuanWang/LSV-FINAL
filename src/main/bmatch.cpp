@@ -24,8 +24,11 @@ int main(int argc, char** argv)
     cirMgr->getCir(1)->collectStrucSupp();
     cirMgr->getCir(2)->collectStrucSupp();
 
-    // cirMgr->collectUnate();
-    // cirMgr->printUnate();
+    cirMgr->getCir(1)->collectFuncSupp();
+    cirMgr->getCir(2)->collectFuncSupp();
+
+    cirMgr->collectUnate();
+    cirMgr->printUnate();
 
     // cirMgr->getCir(1)->printStrucSupp();
     // cirMgr->getCir(2)->printStrucSupp();

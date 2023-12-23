@@ -117,8 +117,8 @@ private:
 
    // member for solving unate and symmetry 
    SatSolver                                               _sat;
-   unordered_map<string, unordered_map<string, bool>>      _posUnateTable;
-   unordered_map<string, unordered_map<string, bool>>      _negUnateTable;
+   vector<vector<size_t>>                                  _posUnateTable;
+   vector<vector<size_t>>                                  _negUnateTable;
    vector<vector<size_t>>                                  _funcSupp;
    vector<vector<vector<bool>>>                            _sym;
 
