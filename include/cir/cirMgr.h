@@ -120,7 +120,7 @@ private:
    vector<vector<size_t>>                                  _posUnateTable;
    vector<vector<size_t>>                                  _negUnateTable;
    vector<vector<size_t>>                                  _funcSupp;
-   vector<vector<vector<bool>>>                            _sym;
+   vector<vector<vector<size_t>>>                          _sym;
 
 };
 

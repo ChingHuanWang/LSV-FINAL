@@ -86,3 +86,7 @@ for all x, ~f_{~xi} & f_{x_i}=0
 there exists x, ~f_{~xi} & f_{x_i}=1?
 UNSAT -> negative unate
 sat -> not negative unate
+
+symmetry:
+there exists f_{xi~xj} xor f_{~xixj}=1?
+UNSAT -> symmetry

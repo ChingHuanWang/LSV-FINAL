@@ -137,8 +137,14 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, V
 
    for (size_t i = 0; i < Mo.size(); ++i) {
       _outputSolver.addAloCnf(Mo[i]);
-      _outputSolver.addAmoCnf(Mo[i]);
+      // _outputSolver.addAmoCnf(Mo[i]);
    }
+   // for (size_t i = 0; i < Mo.size(); ++i) {
+   //    for (size_t j = 0; j < Mo[i].size(); ++j) {
+   //       vf = Mo[i][j]; lf = Lit(vf); lits.push(lf);
+   //    }
+   // }
+   // _outputSolver.addCNF(lits); lits.clear();
 
    for (size_t i = 0; i < Mi.size(); ++i) {
       _outputSolver.addAloCnf(Mi[i]);

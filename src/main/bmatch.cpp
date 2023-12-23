@@ -24,6 +24,16 @@ int main(int argc, char** argv)
     cirMgr->getCir(1)->collectStrucSupp();
     cirMgr->getCir(2)->collectStrucSupp();
 
+    // cirMgr->getCir(1)->collectFuncSupp();
+    // cirMgr->getCir(2)->collectFuncSupp();
+    // cirMgr->getCir(1)->printFuncSupp();
+    // cirMgr->getCir(2)->printFuncSupp();
+
+    // cirMgr->getCir(1)->collectSym();
+    // cirMgr->getCir(2)->collectSym();
+    // cirMgr->getCir(1)->printSym();
+    // cirMgr->getCir(2)->printSym();
+
     cirMgr->getCir(1)->collectFuncSupp();
     cirMgr->getCir(2)->collectFuncSupp();
 
@@ -33,9 +43,9 @@ int main(int argc, char** argv)
     // cirMgr->getCir(1)->printStrucSupp();
     // cirMgr->getCir(2)->printStrucSupp();
     
-    // start = time(NULL);
-    // match->solve();
-    // end = time(NULL);
-    // double diff = difftime(end, start);
-    // cout << "solve time: " << setprecision(6) << fixed << diff << "s" << endl;
+    start = time(NULL);
+    match->solve();
+    end = time(NULL);
+    double diff = difftime(end, start);
+    cout << "solve time: " << setprecision(6) << fixed << diff << "s" << endl;
 }

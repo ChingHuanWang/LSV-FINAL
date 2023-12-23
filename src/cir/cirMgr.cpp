@@ -633,6 +633,8 @@ CirObj::collectSym() {
    for (size_t i = 0; i < g.size(); ++i)
       g[i] = s.newVar();
    
+   // h[i] = 0 => x[i] == y[i]
+   // h[i] = 1 => x[i] != y[i]
    for (size_t i = 0; i < h.size(); ++i) {
       vf = h[i]; lf = Lit(vf);
       va = _piList[i]->getId(); la = Lit(va);
@@ -660,33 +662,48 @@ CirObj::collectSym() {
    _sym.resize(_poList.size());
 
    for (size_t i = 0; i < _poList.size(); ++i) {
-      vector<vector<bool>> sym(_funcSupp[i].size(), vector<bool>(_funcSupp[i].size(), false));
-      for (size_t j = 0; j < _funcSupp[i].size() - 1; ++j) {
+      vector<vector<size_t>> symGroup;
+      vector<bool> grouped(_funcSupp[i].size(), false);
+
+      for (size_t j = 0; j < _funcSupp[i].size(); ++j) {
+         if (grouped[j]) continue;
+
+         vector<size_t> group = {_funcSupp[i][j]};
          for (size_t k = j + 1; k < _funcSupp[i].size(); ++k) {
-
-            if (sym[j][k]) continue;
-
             s.assumeRelease();
             for (size_t l = 0; l < _poList.size(); ++l)
                s.assumeProperty(g[l], l == i);
-            for (size_t l = 0; l < _piList.size(); ++l)
+            for (size_t l = 0; l < _piList.size(); ++l) {
                s.assumeProperty(h[l], (l == _funcSupp[i][j] - 1) || (l == _funcSupp[i][k] - 1));
+               if (l == _funcSupp[i][j] - 1) s.assumeProperty(_piList[l]->getId(), true);
+               else if (l == _funcSupp[i][k] - 1) s.assumeProperty(_piList[l]->getId(), false);
+            }
 
             if (!s.assumpSolve()) {
-               sym[j][k] = true;
-               for (size_t l = j + 1; l < _funcSupp[i].size(); ++l) {
-                  if (sym[j][l]) sym[l][k] = true;
-               }
+               group.push_back(_funcSupp[i][k]);
+               grouped[k] = true;
             }
          }
+         grouped[j] = true;
+
+         symGroup.push_back(group);
       }
-      _sym[i] = sym;
+      _sym[i] = symGroup;
    }
 }
 
 void
 CirObj::printSym() const {
-   
+   cout << "symmetric group of cir " << _objIdx << ":\n";
+   for (size_t i = 0; i < _sym.size(); ++i) {
+      cout << "PO " << i << ":\n";
+      for (size_t j = 0; j < _sym[i].size(); ++j) {
+         for (size_t k = 0; k < _sym[i][j].size(); ++k) {
+            cout << _sym[i][j][k] << " ";
+         }
+         cout << endl;
+      }
+   }   
 }
 
 
