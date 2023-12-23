@@ -726,9 +726,24 @@ CirObj::collectUnate()
             for (size_t i = 0 ; i < 3 ; i++) {
                for (CirAigGate* aig : subAigList) {
                   _sat.addAigCNF(aig->getVar()+dataLift*i, aig->getIn0Gate()->getVar()+dataLift*i, aig->isIn0Inv(),
-                                 aig->getIn1Gate()->getVar()+dataLift*i, aig->isIn0Inv());
+                                 aig->getIn1Gate()->getVar()+dataLift*i, aig->isIn1Inv());
                }
             }
+
+            for (size_t i = 0 ; i < 3 ; i++){
+               for (CirPoGate* po : subPoList) {
+                  va = po->getVar()+dataLift*i; 
+                  vb = po->getIn0Gate()->getVar()+dataLift*i;
+                  la = po->isIn0Inv() ? ~Lit(va) : Lit(va);
+                  lb = Lit(vb);
+
+                  lits.push(la); lits.push(~lb);
+                  _sat.addCNF(lits); lits.clear();
+                  lits.push(~la); lits.push(lb);
+                  _sat.addCNF(lits); lits.clear();
+               }
+            }
+            
 
             // f_a = f_b bar
             for (CirPoGate* po : subPoList) {
@@ -760,20 +775,25 @@ CirObj::collectUnate()
                _sat.assumeProperty(va, false);
                _sat.assumeProperty(vb, true);
                _sat.assumeProperty(vh, true);
-               bool isSat = _sat.solve();
-               cout << "isSat = " << isSat << endl;
+               bool isSat = _sat.assumpSolve();
                if(!isSat) {
                   if (unateType == "pos") {
-                     _posUnateTable[g->getName()][pi->getName()] = true;
+                     _posUnateTable[g->getName()].insert( {pi->getName(), true});
+                     // _posUnateTable[g->getName()][pi->getName()] = true;
                   }
                   else {
-                     _negUnateTable[g->getName()][pi->getName()] = true;
+                     _negUnateTable[g->getName()].insert( {pi->getName(), true});
                   }
                }
             }
-
+           
             // reset _sat
             _sat.reset();
+            subAigList.clear();
+            subDfsList.clear();
+            subPoList.clear();
+            subPiList.clear();
+            
          } 
       }
    }
