@@ -658,7 +658,7 @@ CirObj::collectSymmetry() {
             if (!s.assumpSolve()) sym[j][k] = true;
          }
       }
-      _funcSupp[i] = tmp;
+      // _funcSupp[i] = tmp;
    }
 }
 
