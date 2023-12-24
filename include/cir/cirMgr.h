@@ -89,11 +89,14 @@ public:
    vector<CirPoGate*> getPoList() const { return _poList; }
    vector<CirAigGate*> getAigList() const { return _aigList; }
    vector<vector<size_t>> getFuncSupp() const { return _funcSupp; }
+   vector<vector<size_t>> getInvFuncSupp() const { return _invFuncSupp; }
    void getRedundant(vector<size_t>&, vector<size_t>&, vector<vector<bool>>&);
    void collectStrucSupp();
    void collectFuncSupp();
+   void collectInvFuncSupp();
    void printStrucSupp() const;
    void printFuncSupp() const;
+   void printInvFuncSupp() const;
 
    // functions for constructing unate table and symmetry table
    void collectUnate();
@@ -121,6 +124,7 @@ private:
    vector<vector<size_t>>                                  _posUnateTable;
    vector<vector<size_t>>                                  _negUnateTable;
    vector<vector<size_t>>                                  _funcSupp;
+   vector<vector<size_t>>                                  _invFuncSupp;
    vector<vector<vector<size_t>>>                          _sym;
 
 };

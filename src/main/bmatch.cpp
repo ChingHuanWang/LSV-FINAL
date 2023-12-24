@@ -24,18 +24,15 @@ int main(int argc, char** argv)
     cirMgr->getCir(1)->collectStrucSupp();
     cirMgr->getCir(2)->collectStrucSupp();
 
-    // cirMgr->getCir(1)->collectFuncSupp();
-    // cirMgr->getCir(2)->collectFuncSupp();
-    // cirMgr->getCir(1)->printFuncSupp();
-    // cirMgr->getCir(2)->printFuncSupp();
+    
+    cirMgr->getCir(1)->collectFuncSupp();
+    cirMgr->getCir(2)->collectFuncSupp();
 
-    // cirMgr->getCir(1)->collectSym();
-    // cirMgr->getCir(2)->collectSym();
-    // cirMgr->getCir(1)->printSym();
-    // cirMgr->getCir(2)->printSym();
-    // getchar();
-    // cirMgr->getCir(1)->collectFuncSupp();
-    // cirMgr->getCir(2)->collectFuncSupp();
+    cirMgr->getCir(1)->collectInvFuncSupp();
+    cirMgr->getCir(2)->collectInvFuncSupp();
+
+    cirMgr->getCir(1)->printInvFuncSupp();
+    cirMgr->getCir(2)->printInvFuncSupp();
 
     // cirMgr->collectUnate();
     // cirMgr->printUnate();
@@ -45,6 +42,7 @@ int main(int argc, char** argv)
     
     start = time(NULL);
     match->solve();
+    match->printMatchedMiInvFuncSupp();
     end = time(NULL);
     double diff = difftime(end, start);
     cout << "solve time: " << setprecision(6) << fixed << diff << "s" << endl;

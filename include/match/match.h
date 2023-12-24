@@ -23,6 +23,7 @@ class Match {
         void printOutputSolverValue(vector<vector<Var>>&, vector<vector<Var>>&, vector<vector<Var>>&, vector<vector<Var>>&, Var&);
         void printInputSolverValue(vector<vector<Var>>&, vector<vector<Var>>&, vector<vector<Var>>&);
 
+        void printMatchedMiInvFuncSupp() const;
         void write();
 
     private:

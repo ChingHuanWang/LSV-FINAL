@@ -223,6 +223,7 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
 
    // ==================== output solver constraint ====================
 
+   // sum of every row = 1, because problem demand that PI/PO of cir2 need to be matched 
    for (size_t i = 0; i < Mo.size(); ++i) {
       _outputSolver.addAloCnf(Mo[i]);
       _outputSolver.addAmoCnf(Mo[i]);
@@ -239,6 +240,9 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
       _outputSolver.addAmoCnf(Mi[i]);
    }
 
+   // every two column of the Mo matrix
+   // (1) every two entry of C/D coulmn can not both be 1
+   // (2) ci and dj can not both be 1  
    for (size_t i = 0; i < Mo[0].size(); i += 2) {
       for (size_t j = 0; j < Mo.size() - 1; ++j) {
          for (size_t k = j + 1; k < Mo.size(); ++k) {
@@ -343,34 +347,6 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
       }
    }
 
-   // for (size_t i = 0; i < Mi[0].size(); i += 2) {
-   //    for (size_t j = 0; j < Mi.size() - 1; ++j) {
-   //       for (size_t k = j + 1; k < Mi.size(); ++k) {
-   //          va = Mi[j][i]; la = Lit(va);
-   //          vb = Mi[k][i]; lb = Lit(vb);
-   //          lits.push(~la); lits.push(~lb);
-   //          _outputSolver.addCNF(lits); lits.clear();
-   //       }
-   //    }
-
-   //    for (size_t j = 0; j < Mi.size(); ++j) {
-   //       for (size_t k = 0; k < Mi.size(); ++k) {
-   //          va = Mi[j][i]; la = Lit(va);
-   //          vb = Mi[k][i + 1]; lb = Lit(vb);
-   //          lits.push(~la); lits.push(~lb);
-   //          _outputSolver.addCNF(lits); lits.clear();
-   //       }
-   //    }
-
-   //    for (size_t j = 0; j < Mi.size() - 1; ++j) {
-   //       for (size_t k = j + 1; k < Mi.size(); ++k) {
-   //          va = Mi[j][i + 1]; la = Lit(va);
-   //          vb = Mi[k][i + 1]; lb = Lit(vb);
-   //          lits.push(~la); lits.push(~lb);
-   //          _outputSolver.addCNF(lits); lits.clear();
-   //       }
-   //    }
-   // }
 
    // ===== functional support constraint =====
    // if |FuncSupp(f_i)| > |FuncSupp(g_j)|, then f_i cannot map to g_j
@@ -423,6 +399,7 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
    // 2. input mapping matrix
    // 3. intermediate variable h
    // 4. output mapping matrix
+   // recieve output solver solution
    _inputSolver.addCirCNF(cirMgr->getCir(1), 0);
    _inputSolver.addCirCNF(cirMgr->getCir(2), gateNum[0]);
 
@@ -440,10 +417,6 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
    // ================== input solver variable ==================
 
    // ================== input solver constraint ==================
-   for (size_t i = 0; i < mi.size(); ++i) {
-      _inputSolver.addAloCnf(mi[i]);
-      _inputSolver.addAmoCnf(mi[i]);
-   }
 
    // circuit 1 AIG constraint
    // for (size_t i = 0; i < aigList[0].size(); ++i) {
@@ -492,6 +465,7 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
    // }
 
    // x_i and y_j pair
+   // aij -> xi == yj
    for (size_t j = 0; j < mi.size(); ++j) {
       for (size_t i = 0; i < piNum[0] * 2; ++i) {
          vf = mi[j][i]; lf = Lit(vf);
@@ -506,6 +480,7 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
    }
 
    // 0 or 1 and y_j pair
+   // a_1_m_I+1 -> 0 == yj
    for (size_t j = 0; j < mi.size(); ++j) {
       for (size_t i = piNum[0] * 2; i < mi[j].size(); ++i) {
          vf = mi[j][i]; lf = Lit(vf);
@@ -517,6 +492,8 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
    }
 
    // h
+   // c11 -> h11 == (f1 XOR g1)
+   // exclude the case of cij = 0
    for (size_t j = 0; j < mo.size(); ++j) {
       for (size_t i = 0; i < mo[j].size(); ++i) {
          vf = mo[j][i]; lf = Lit(vf);
@@ -536,6 +513,7 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
    }
 
    // c, d and h
+   // ~c11 -> ~h11
    for (size_t j = 0; j < mo.size(); ++j) {
       for (size_t i = 0; i < mo[j].size(); ++i) {
          vf = mo[j][i]; lf = Lit(vf);
@@ -546,6 +524,7 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
       }
    }
 
+   // sum hij
    for (size_t j = 0; j < h.size(); ++j) {
       for (size_t i = 0; i < h[j].size(); ++i) {
          vf = h[j][i]; lf = Lit(vf);
@@ -638,6 +617,7 @@ void Match::solve() {
 
       // ==================== add input solver assumption ====================
 
+      // if output solver sat, return the value of MI and MO for mi and mo use
       _inputSolver.assumeRelease();
       for (size_t j = 0; j < outputMo.size(); ++j) {
          for (size_t i = 0; i < outputMo[j].size(); ++i) {
@@ -653,6 +633,7 @@ void Match::solve() {
       }
       // ==================== add input solver assumption ====================
 
+      // if input solver unsat -> no counter example -> record the sol of MI/MO as final answer
       if (!_inputSolver.assumpSolve()) {
          optimal = score;
          cout << "step:" << x << ", unsat, optimal = " << optimal << endl;
@@ -670,7 +651,8 @@ void Match::solve() {
          continue;
       }
       // else printInputSolverValue(inputMi, inputH, inputMo);
-
+      
+      // calculate the redundant var, if x3 is redunda, then x3 is recorded in red
       counterExampleIn.resize(piNum[0], 0); counterExampleOut.resize(poNum[0], 0);
       for (size_t i = 0; i < piNum[0]; ++i)
          counterExampleIn[i] = (size_t)_inputSolver.getValue(i + 1);
@@ -686,6 +668,7 @@ void Match::solve() {
       cirMgr->getCir(2)->getRedundant(counterExampleIn, counterExampleOut, red2);
 
       // cout << "==================== add learned clause ====================" << endl;
+      // refer to strenthen learning ex5
       for (size_t q = 0; q < poList[1].size(); ++q) {
          for (size_t p = 0; p < poList[0].size(); ++p) {
             // cout << "p = " << p << ", q = " << q << endl;
@@ -713,6 +696,7 @@ void Match::solve() {
          }
       }
 
+      // add clause to prevent to use the current MI/MO
       for (size_t j = 0; j < outputMo.size(); ++j) {
          for (size_t i = 0; i < outputMo[j].size(); ++i) {
             vf = outputMo[j][i]; lf = (_outputSolver.getValue(outputMo[j][i]))? ~Lit(vf):Lit(vf);
@@ -749,8 +733,25 @@ void Match::solve() {
    // ================== solve ==================
 
    write();
-   
 
+}
+
+void 
+Match::printMatchedMiInvFuncSupp() const
+{
+   vector<CirPiGate*> cir1Pi = cirMgr->getCir(1)->getPiList();
+   vector<CirPiGate*> cir2Pi = cirMgr->getCir(2)->getPiList();
+   vector<vector<size_t>> cir1Inv = cirMgr->getCir(1)->getInvFuncSupp();
+   vector<vector<size_t>> cir2Inv = cirMgr->getCir(2)->getInvFuncSupp();
+
+   for (size_t i = 0 ; i < cir2Pi.size() ; i++) {
+      for (size_t j = 0 ; j < cir1Pi.size() ; j++) {
+         if (_resultMi[i][j*2] || _resultMi[i][j*2+1]) {
+            cout << "(" << cir2Pi[i]->getName() << "," << cir1Pi[j]->getName()
+                 << " : " << cir2Inv[i].size() << "," << cir1Inv[j].size() << ")" << endl;
+         }
+      }
+   }
 }
 
 void Match::printOutputSolverValue(vector<vector<Var>>& Mi, vector<vector<Var>>& Mo, vector<vector<Var>>& Mbi, vector<vector<Var>>& Mbo, Var& withBus) {
