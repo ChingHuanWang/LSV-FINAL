@@ -591,11 +591,6 @@ Match::printMatchedMiInvFuncSupp() const
    vector<vector<size_t>> cir1Inv = cirMgr->getCir(1)->getInvFuncSupp();
    vector<vector<size_t>> cir2Inv = cirMgr->getCir(2)->getInvFuncSupp();
 
-   cout << "cir1 pi size = " << cir1Pi.size() << endl;
-   cout << "cir2 pi size = " << cir2Pi.size() << endl;
-
-   cout << "Mi size = " << _resultMi.size() << " * " << _resultMi[0].size() << endl;
-
    for (size_t i = 0 ; i < cir2Pi.size() ; i++) {
       for (size_t j = 0 ; j < cir1Pi.size() ; j++) {
          if (_resultMi[i][j*2] || _resultMi[i][j*2+1]) {
