@@ -18,9 +18,9 @@ class Match {
         int getScore(const vector<vector<Var>>&);
 
         void solve();
-        void outputSolverInit(vector<vector<Var>>&, vector<vector<Var>>&, Var&);
+        void outputSolverInit(vector<vector<Var>>&, vector<vector<Var>>&, vector<vector<Var>>&, vector<vector<Var>>&, Var&);
         void inputSolverInit(vector<vector<Var>>&, vector<vector<Var>>&, vector<vector<Var>>&);
-        void printOutputSolverValue(vector<vector<Var>>&, vector<vector<Var>>&, Var&);
+        void printOutputSolverValue(vector<vector<Var>>&, vector<vector<Var>>&, vector<vector<Var>>&, vector<vector<Var>>&, Var&);
         void printInputSolverValue(vector<vector<Var>>&, vector<vector<Var>>&, vector<vector<Var>>&);
 
         void write();

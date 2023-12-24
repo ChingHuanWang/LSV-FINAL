@@ -80,13 +80,79 @@ void Match::parseInput(char* inFilePath, vector<string>& cirFileList)
 }
 
 void Match::parseBus() {
-   // for (size_t i = 0; i < _bus.size(); ++i) {
-   //    for (size_t j = 0; j < _bus[i].size(); ++j) {
-   //       for (size_t k = 0; k < _bus[i][j].size(); ++k) {
+   unordered_map<string, size_t> piMap[2], poMap[2];
+   vector<vector<CirPiGate*>> piList = {cirMgr->getCir(1)->getPiList(), cirMgr->getCir(2)->getPiList()};
+   vector<vector<CirPoGate*>> poList = {cirMgr->getCir(1)->getPoList(), cirMgr->getCir(2)->getPoList()};
+   size_t firstPoId[2] = {poList[0][0]->getId(), poList[1][0]->getId()};
 
-   //       }
-   //    }
-   // }
+   
+   for (size_t i = 0; i < _bus.size(); ++i) {
+      for (size_t j = 0; j < _bus[i].size(); ++j) {
+         for (size_t k = 0; k < _bus[i][j].size(); ++k) {
+            cout << _bus[i][j][k] << " ";
+         }
+         cout << endl;
+      }
+   }
+   cout << endl;
+
+   // construct unordered map of PI/PO name to corresponding id.
+   for (size_t i = 0; i < piList.size(); ++i) {
+      for (size_t j = 0; j < piList[i].size(); ++j) {
+         piMap[i][piList[i][j]->getName()] = piList[i][j]->getId();
+      }
+   }
+   for (size_t i = 0; i < poList.size(); ++i) {
+      for (size_t j = 0; j < poList[i].size(); ++j) {
+         poMap[i][poList[i][j]->getName()] = poList[i][j]->getId() - firstPoId[i] + 1;
+      }
+   }
+
+   _piBus.resize(2);
+   _poBus.resize(2);
+   for (size_t i = 0; i < _bus.size(); ++i) {
+      vector<vector<size_t>> piBuses, poBuses;
+      for (size_t j = 0; j < _bus[i].size(); ++j) {
+         vector<size_t> bus(_bus[i][j].size(), 0);
+         bool isPi = false;
+         for (size_t k = 0; k < _bus[i][j].size(); ++k) {
+            if (piMap[i].find(_bus[i][j][k]) != piMap[i].end()) {
+               bus[k] = piMap[i][_bus[i][j][k]];
+               isPi = true;
+            }
+            else if (poMap[i].find(_bus[i][j][k]) != piMap[i].end()) {
+               bus[k] = poMap[i][_bus[i][j][k]];
+            }
+            else {
+               cerr << "There is some wrong in parseBus()\n";
+            }
+         }
+         if (isPi) piBuses.push_back(bus);
+         else poBuses.push_back(bus);
+      }
+      _piBus[i] = piBuses;
+      _poBus[i] = poBuses;
+   }
+
+   for (size_t i = 0; i < _piBus.size(); ++i) {
+      for (size_t j = 0; j < _piBus[i].size(); ++j) {
+         for (size_t k = 0; k < _piBus[i][j].size(); ++k) {
+            cout << _piBus[i][j][k] << " ";
+         }
+         cout << endl;
+      }
+   }
+   cout << endl;
+   for (size_t i = 0; i < _poBus.size(); ++i) {
+      for (size_t j = 0; j < _poBus[i].size(); ++j) {
+         for (size_t k = 0; k < _poBus[i][j].size(); ++k) {
+            cout << _poBus[i][j][k] << " ";
+         }
+         cout << endl;
+      }
+   }
+
+   // Todo: order Bus by ?
 }
 
 int Match::getScore(const vector<vector<Var>>& sol) {
@@ -102,7 +168,7 @@ int Match::getScore(const vector<vector<Var>>& sol) {
    return score;
 }
 
-void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, Var& allowProj) {
+void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, vector<vector<Var>>& Mbo, vector<vector<Var>>& Mbi, Var& withBus) {
 
    size_t poNum[2] = {cirMgr->getCir(1)->getPoNum(), cirMgr->getCir(2)->getPoNum()};
    size_t piNum[2] = {cirMgr->getCir(1)->getPiNum(), cirMgr->getCir(2)->getPiNum()};
@@ -140,14 +206,26 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, V
          Mo[i][j] = _outputSolver.newVar();
       }
    }
-   allowProj = _outputSolver.newVar();
+
+   for (size_t i = 0; i < Mbi.size(); ++i) {
+      for (size_t j = 0; j < Mbi[i].size(); ++j) {
+         Mbi[i][j] = _outputSolver.newVar();
+      }
+   }
+
+   for (size_t i = 0; i < Mbo.size(); ++i) {
+      for (size_t j = 0; j < Mbo[i].size(); ++j) {
+         Mbo[i][j] = _outputSolver.newVar();
+      }
+   }
+   withBus = _outputSolver.newVar();
    // ==================== output solver variable ====================
 
    // ==================== output solver constraint ====================
 
    for (size_t i = 0; i < Mo.size(); ++i) {
       _outputSolver.addAloCnf(Mo[i]);
-      // _outputSolver.addAmoCnf(Mo[i]);
+      _outputSolver.addAmoCnf(Mo[i]);
    }
    // for (size_t i = 0; i < Mo.size(); ++i) {
    //    for (size_t j = 0; j < Mo[i].size(); ++j) {
@@ -164,30 +242,102 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, V
    for (size_t i = 0; i < Mo[0].size(); i += 2) {
       for (size_t j = 0; j < Mo.size() - 1; ++j) {
          for (size_t k = j + 1; k < Mo.size(); ++k) {
-            vf = allowProj; lf = Lit(vf);
-            va = Mo[j][i]; la = Lit(va);
-            vb = Mo[k][i]; lb = Lit(vb);
-            lits.push(lf); lits.push(~la); lits.push(~lb);
+            // vf = allowProj; lf = Lit(vf); lits.push(lf);
+            va = Mo[j][i]; la = Lit(va); lits.push(~la);
+            vb = Mo[k][i]; lb = Lit(vb); lits.push(~lb);
             _outputSolver.addCNF(lits); lits.clear();
          }
       }
 
       for (size_t j = 0; j < Mo.size(); ++j) {
          for (size_t k = 0; k < Mo.size(); ++k) {
-            vf = allowProj; lf = Lit(vf);
-            va = Mo[j][i]; la = Lit(va);
-            vb = Mo[k][i + 1]; lb = Lit(vb);
-            lits.push(lf); lits.push(~la); lits.push(~lb);
+            // vf = allowProj; lf = Lit(vf); lits.push(lf);
+            va = Mo[j][i]; la = Lit(va); lits.push(~la);
+            vb = Mo[k][i + 1]; lb = Lit(vb); lits.push(~lb);
             _outputSolver.addCNF(lits); lits.clear();
          }
       }
 
       for (size_t j = 0; j < Mo.size() - 1; ++j) {
          for (size_t k = j + 1; k < Mo.size(); ++k) {
-            vf = allowProj; lf = Lit(vf);
-            va = Mo[j][i + 1]; la = Lit(va);
-            vb = Mo[k][i + 1]; lb = Lit(vb);
-            lits.push(lf); lits.push(~la); lits.push(~lb);
+            // vf = allowProj; lf = Lit(vf); lits.push(lf);
+            va = Mo[j][i + 1]; la = Lit(va); lits.push(~la);
+            vb = Mo[k][i + 1]; lb = Lit(vb); lits.push(~lb);
+            _outputSolver.addCNF(lits); lits.clear();
+         }
+      }
+   }
+   // ===== bus constraint =====
+   for (size_t i = 0; i < Mbo.size(); ++i) {
+      _outputSolver.addAloCnf(Mbo[i]);
+      _outputSolver.addAmoCnf(Mbo[i]);
+   }
+   for (size_t i = 0; i < Mbo[0].size(); ++i) {
+      for (size_t j = 0; j < Mbo.size() - 1; ++j) {
+         for (size_t k = j + 1; k < Mbo.size(); ++k) {
+            va = Mbo[j][i]; la = Lit(va);
+            vb = Mbo[k][i]; lb = Lit(vb);
+            lits.push(~la); lits.push(~lb);
+            _outputSolver.addCNF(lits); lits.clear();
+         }
+      }
+   }
+   for (size_t i = 0; i < Mbo.size(); ++i) {
+      for (size_t j = 0; j < Mbo[i].size(); ++j) {
+         for (size_t k = 0; k < _poBus[1][i].size(); ++k) {
+            vf = withBus; lf = Lit(vf);
+            va = Mbo[i][j]; la = Lit(va);
+            lits.push(~lf); lits.push(~la);
+            // cout << (_poBus[1][i][k] - 1) << " mapped to ";
+            for (size_t l = 0; l < _poBus[0][j].size(); ++l) {
+               // cout << (_poBus[0][j][l] - 1) << " or ";
+               vb = Mo[_poBus[1][i][k] - 1][(_poBus[0][j][l] - 1) * 2]; lb = Lit(vb);
+               lits.push(lb);
+               vb = Mo[_poBus[1][i][k] - 1][(_poBus[0][j][l] - 1) * 2 + 1]; lb = Lit(vb);
+               lits.push(lb);
+            }
+            _outputSolver.addCNF(lits); lits.clear();
+         }
+      }
+   }
+
+   for (size_t i = 0; i < Mbi.size(); ++i) {
+      _outputSolver.addAloCnf(Mbi[i]);
+      _outputSolver.addAmoCnf(Mbi[i]);
+   }
+   for (size_t i = 0; i < Mbi[0].size(); ++i) {
+      for (size_t j = 0; j < Mbi.size() - 1; ++j) {
+         for (size_t k = j + 1; k < Mbi.size(); ++k) {
+            va = Mbi[j][i]; la = Lit(va);
+            vb = Mbi[k][i]; lb = Lit(vb);
+            lits.push(~la); lits.push(~lb);
+            _outputSolver.addCNF(lits); lits.clear();
+         }
+      }
+   }
+
+   for (size_t i = 0; i < Mbi.size(); ++i) {
+      for (size_t j = 0; j < Mbi[i].size(); ++j) {
+         for (size_t k = 0; k < _piBus[1][i].size(); ++k) {
+            vf = withBus; lf = Lit(vf);
+            va = Mbi[i][j]; la = Lit(va);
+            lits.push(~lf); lits.push(~la);
+            // cout << (_poBus[1][i][k] - 1) << " mapped to ";
+            for (size_t l = 0; l < _piBus[0][j].size(); ++l) {
+               // cout << (_poBus[0][j][l] - 1) << " or ";
+               vb = Mi[_piBus[1][i][k] - 1][(_piBus[0][j][l] - 1) * 2]; lb = Lit(vb);
+               lits.push(lb);
+               vb = Mi[_piBus[1][i][k] - 1][(_piBus[0][j][l] - 1) * 2 + 1]; lb = Lit(vb);
+               lits.push(lb);
+            }
+            for (size_t l = Mi[0].size() - 2; l < Mi[0].size(); ++l) {
+               // cout << (_poBus[0][j][l] - 1) << " or ";
+               vb = Mi[_piBus[1][i][k] - 1][l]; lb = Lit(vb);
+               lits.push(lb);
+               vb = Mi[_piBus[1][i][k] - 1][l]; lb = Lit(vb);
+               lits.push(lb);
+            }
+            // cout << endl;
             _outputSolver.addCNF(lits); lits.clear();
          }
       }
@@ -417,7 +567,9 @@ void Match::solve() {
 
    vector<vector<Var>> outputMo(poNum[1], vector<Var>(poNum[0] * 2, 0));
    vector<vector<Var>> outputMi(piNum[1], vector<Var>((piNum[0] + 1) * 2, 0));
-   Var allowProj;
+   vector<vector<Var>> Mbo(_poBus[1].size(), vector<Var>(_poBus[0].size(), 0));
+   vector<vector<Var>> Mbi(_piBus[1].size(), vector<Var>(_piBus[0].size(), 0));
+   Var withBus;
 
    vector<vector<Var>> inputMi(piNum[1], vector<Var>((piNum[0] + 1) * 2, 0));
    vector<vector<Var>> inputH(poNum[1], vector<Var>(poNum[0] * 2, 0));
@@ -441,7 +593,7 @@ void Match::solve() {
    Var vf, va, vb, vc;
    size_t i0, i1;
 
-   outputSolverInit(outputMo, outputMi, allowProj);
+   outputSolverInit(outputMo, outputMi, Mbo, Mbi, withBus);
    inputSolverInit(inputMi, inputH, inputMo);
 
    _K = poNum[1] + 1;
@@ -451,12 +603,12 @@ void Match::solve() {
 
    // ================== solve ==================
    int optimal = 0, score;
-   bool proj = false;
+   bool proj = true;
    char inputcheck;
    vector<size_t> counterExampleIn, counterExampleOut;
    vector<vector<bool>> red1, red2;
    _outputSolver.assumeRelease();
-   _outputSolver.assumeProperty(allowProj, proj);
+   _outputSolver.assumeProperty(withBus, proj);
 
    _resultMo.resize(poNum[1], vector<int>(poNum[0] * 2, 0));
    _resultMi.resize(piNum[1], vector<int>((piNum[0] + 1) * 2, 0));
@@ -466,13 +618,13 @@ void Match::solve() {
       else {
          cout << "unsat" << endl;
          cout << score << endl;
-         if (!proj) {
-            cout << "allow projection\n";
+         if (proj) {
+            cout << "without bus\n";
             cout << "paused to check: If there is no problem, please press Enter:\n";
             getchar();
-            proj = true;
+            proj = false;
             _outputSolver.assumeRelease();
-            _outputSolver.assumeProperty(allowProj, proj);
+            _outputSolver.assumeProperty(withBus, proj);
             continue;
          }
          else break;
@@ -481,7 +633,8 @@ void Match::solve() {
       cout << "x = " << x << ", optimal = " << optimal << ", score = " << score << endl;
       if (score <= optimal) continue;
 
-      // printOutputSolverValue(outputMi, outputMi, allowProj);
+      printOutputSolverValue(outputMi, outputMo, Mbi, Mbo, withBus);
+      // getchar();
 
       // ==================== add input solver assumption ====================
 
@@ -589,7 +742,7 @@ void Match::solve() {
       // }
       // if (!_outputSolver.assumpSolve()) {cout << "There is some problem." << endl; getchar();}
       // _outputSolver.assumeRelease();
-      // _outputSolver.assumeProperty(allowProj, proj);
+      // _outputSolver.assumeProperty(withBus, proj);
       // getchar();
       // cout << "==================== add learned clause ====================" << endl;
    }
@@ -600,7 +753,7 @@ void Match::solve() {
 
 }
 
-void Match::printOutputSolverValue(vector<vector<Var>>& Mi, vector<vector<Var>>& Mo, Var& allowProj) {
+void Match::printOutputSolverValue(vector<vector<Var>>& Mi, vector<vector<Var>>& Mo, vector<vector<Var>>& Mbi, vector<vector<Var>>& Mbo, Var& withBus) {
    cout << "==================== variable of output solver ====================" << endl;
       cout << "input mapping matrix:\n";
       for (size_t i = 0; i < Mi.size(); ++i) {
@@ -616,7 +769,21 @@ void Match::printOutputSolverValue(vector<vector<Var>>& Mi, vector<vector<Var>>&
          }
          cout << endl;
       }
-      cout << "allowProj: " << _outputSolver.getValue(allowProj) << endl;
+      cout << "input mapping bus matrix:\n";
+      for (size_t i = 0; i < Mbi.size(); ++i) {
+         for (size_t j = 0; j < Mbi[i].size(); ++j) {
+            cout << _outputSolver.getValue(Mbi[i][j]) << " ";
+         }
+         cout << endl;
+      }
+      cout << "output mapping bus matrix:\n";
+      for (size_t i = 0; i < Mbo.size(); ++i) {
+         for (size_t j = 0; j < Mbo[i].size(); ++j) {
+            cout << _outputSolver.getValue(Mbo[i][j]) << " ";
+         }
+         cout << endl;
+      }
+      cout << "withBus: " << _outputSolver.getValue(withBus) << endl;
    cout << "==================== variable of output solver ====================" << endl;
 }
 
