@@ -581,6 +581,32 @@ CirObj::printFuncSupp() const {
 }
 
 void
+CirObj::collectInvFuncSupp()
+{
+   _invFuncSupp.assign(_piList.size(), vector<size_t>(0, 0));
+   for (size_t i = 0 ; i < _poList.size() ; i++) {
+      for (size_t piId : _funcSupp[i]) {
+         for (size_t j = 0 ; j < _piList.size() ; j++) {
+            if (_piList[j]->getId() == piId) 
+               _invFuncSupp[j].push_back(_poList[i]->getId());
+         }
+      }
+   }
+}
+
+void 
+CirObj::printInvFuncSupp() const
+{
+   for (size_t i = 0 ; i < _piList.size() ; i++) {
+      cout << "PI " << _piList[i]->getName() << " : ";
+      for (size_t poId : _invFuncSupp[i]) {
+         cout << _idList[poId]->getName() << " ";
+      }
+      cout << endl;
+   }
+}
+
+void
 CirObj::collectSym() {
 
    if (_funcSupp.empty()) collectFuncSupp();

@@ -580,8 +580,30 @@ void Match::solve() {
    // ================== solve ==================
 
    write();
-   
 
+}
+
+void 
+Match::printMatchedMiInvFuncSupp() const
+{
+   vector<CirPiGate*> cir1Pi = cirMgr->getCir(1)->getPiList();
+   vector<CirPiGate*> cir2Pi = cirMgr->getCir(2)->getPiList();
+   vector<vector<size_t>> cir1Inv = cirMgr->getCir(1)->getInvFuncSupp();
+   vector<vector<size_t>> cir2Inv = cirMgr->getCir(2)->getInvFuncSupp();
+
+   cout << "cir1 pi size = " << cir1Pi.size() << endl;
+   cout << "cir2 pi size = " << cir2Pi.size() << endl;
+
+   cout << "Mi size = " << _resultMi.size() << " * " << _resultMi[0].size() << endl;
+
+   for (size_t i = 0 ; i < cir2Pi.size() ; i++) {
+      for (size_t j = 0 ; j < cir1Pi.size() ; j++) {
+         if (_resultMi[i][j*2] || _resultMi[i][j*2+1]) {
+            cout << "(" << cir2Pi[i]->getName() << "," << cir1Pi[j]->getName()
+                 << " : " << cir2Inv[i].size() << "," << cir1Inv[j].size() << ")" << endl;
+         }
+      }
+   }
 }
 
 void Match::printOutputSolverValue(vector<vector<Var>>& Mi, vector<vector<Var>>& Mo, Var& allowProj) {
