@@ -79,6 +79,16 @@ void Match::parseInput(char* inFilePath, vector<string>& cirFileList)
 
 }
 
+void Match::parseBus() {
+   // for (size_t i = 0; i < _bus.size(); ++i) {
+   //    for (size_t j = 0; j < _bus[i].size(); ++j) {
+   //       for (size_t k = 0; k < _bus[i][j].size(); ++k) {
+
+   //       }
+   //    }
+   // }
+}
+
 int Match::getScore(const vector<vector<Var>>& sol) {
 
    int score = 0, tmp;

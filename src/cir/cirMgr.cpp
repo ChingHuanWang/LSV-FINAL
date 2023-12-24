@@ -468,17 +468,13 @@ CirObj::getRedundant(vector<size_t>& input, vector<size_t>& output, vector<vecto
 
    assert (_poList.size() == output.size());
 
-   redundant.resize(output.size(), vector<bool>(input.size(), false));
-   // cout << "counter example input:" << endl;
-   // for (size_t i = 0; i < input.size(); ++i) {
-   //    cout << input[i] << " ";
-   // }
-   // cout << endl;
-   // cout << "counter example output:" << endl;
-   // for (size_t i = 0; i < output.size(); ++i) {
-   //    cout << output[i] << " ";
-   // }
-   // cout << endl;
+   redundant.resize(output.size(), vector<bool>(input.size(), true));
+
+   for (size_t i = 0; i < redundant.size(); ++i) {
+      for (size_t j = 0; j < _funcSupp[i].size(); ++j) {
+         redundant[i][_funcSupp[i][j] - 1] = false;
+      }
+   }
 
    SatSolver s;
    Var vf, va, vb;
@@ -489,28 +485,10 @@ CirObj::getRedundant(vector<size_t>& input, vector<size_t>& output, vector<vecto
 
    s.initialize();
    s.addCirCNF(this, 0);
-   // for (size_t i = 0; i < num; ++i)
-   //    s.newVar();
    
    for (size_t i = 0; i < _poList.size(); ++i)
       vh[i] = s.newVar();
    
-   // for (size_t i = 0; i < _aigList.size(); ++i) {
-   //    vf = _aigList[i]->getId();
-   //    i0 = _aigList[i]->getIn0LitId();
-   //    i1 = _aigList[i]->getIn1LitId();
-   //    va = i0 / 2; vb = i1 / 2;
-   //    s.addAigCNF(vf, va, i0 & 1, vb, i1 & 1);
-   // }
-   // for (size_t i = 0; i < _poList.size(); ++i) {
-   //    vf = _poList[i]->getId(); lf = Lit(vf);
-   //    i0 = _poList[i]->getIn0LitId();
-   //    va = i0 / 2; la = (i0 & 1)? ~Lit(va):Lit(va);
-   //    lits.push(lf); lits.push(~la);
-   //    s.addCNF(lits); lits.clear();
-   //    lits.push(~lf); lits.push(la);
-   //    s.addCNF(lits); lits.clear();
-   // }
    for (size_t i = 0; i < _poList.size(); ++i) {
       vf = _poList[i]->getId(); lf = (output[i])? ~Lit(vf):Lit(vf);
       la = ~Lit(vh[i]);
@@ -519,26 +497,16 @@ CirObj::getRedundant(vector<size_t>& input, vector<size_t>& output, vector<vecto
    }
    
    for (size_t i = 0; i < output.size(); ++i) {
-      for (size_t j = 0; j < input.size(); ++j) {
-         redundant[i][j] = true;
+      for (size_t j = 0; j < _funcSupp[i].size(); ++j) {
+         redundant[i][_funcSupp[i][j] - 1] = true;
          s.assumeRelease();
          s.assumeProperty(vh[i], true);
          for (size_t k = 0; k < input.size(); ++k) {
             if (!redundant[i][k]) s.assumeProperty(k + 1, input[k]);
          }
-         if (s.assumpSolve()) redundant[i][j] = false;
+         if (s.assumpSolve()) redundant[i][_funcSupp[i][j] - 1] = false;
       }
    }
-
-   // cout << "redundant set" << endl;
-   // for (size_t i = 0; i < redundant.size(); ++i) {
-   //    for (size_t j = 0; j < redundant[i].size(); ++j) {
-   //       cout << ((redundant[i][j])? 1:0) << " ";
-   //    }
-   //    cout << endl;
-   // }
-
-   // getchar();
 }
 
 void
@@ -636,7 +604,7 @@ CirObj::collectSym() {
    // h[i] = 0 => x[i] == y[i]
    // h[i] = 1 => x[i] != y[i]
    for (size_t i = 0; i < h.size(); ++i) {
-      vf = h[i]; lf = Lit(vf);
+      vf = h[i]; lf = ~Lit(vf);
       va = _piList[i]->getId(); la = Lit(va);
       vb = va + gateNum; lb = Lit(vb);
       lits.push(lf); lits.push(la); lits.push(~lb);

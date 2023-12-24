@@ -13,6 +13,7 @@ class Match {
         }
 
         void parseInput(char*, vector<string>&);
+        void parseBus();
 
         int getScore(const vector<vector<Var>>&);
 
@@ -27,6 +28,8 @@ class Match {
     private:
         char*                           _outFile;
         vector<vector<vector<string>>>  _bus;
+        vector<vector<vector<size_t>>>  _piBus;
+        vector<vector<vector<size_t>>>  _poBus;
         SatSolver                       _outputSolver;     // M_O (c, d, ...)
         SatSolver                       _inputSolver;      // M_I (a, b, ...)
         int                             _optimal;
