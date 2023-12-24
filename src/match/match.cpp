@@ -190,6 +190,7 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
    cirMgr->getCir(1)->printFuncSupp();
    cirMgr->getCir(2)->printFuncSupp();
    vector<vector<vector<size_t>>> funcSupp = {cirMgr->getCir(1)->getFuncSupp(), cirMgr->getCir(2)->getFuncSupp()};
+   vector<vector<vector<size_t>>> invFuncSupp = {cirMgr->getCir(1)->getInvFuncSupp(), cirMgr->getCir(2)->getInvFuncSupp()};
 
    // ==================== output solver variable ====================
    // 1. output mapping matrix
@@ -377,6 +378,28 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
    }
    // ===== functional support constraint =====
 
+
+   // ===== inv functional support constraint =======
+   // |invFuncSupp(xi)| vs |invFuncSupp(xj)|
+   for (size_t i = 0 ; i < piNum[0] ; i++) {
+      for (size_t j = 0 ; j < piNum[1] ; j++) {
+         // ~cij~dij
+         if (invFuncSupp[0][i].size() != invFuncSupp[1][j].size()) {
+            vf = Mi[j][i*2]; lf = ~Lit(vf); lits.push(lf);
+            _outputSolver.addCNF(lits); lits.clear();
+            vf = Mi[j][i*2+1]; lf = ~Lit(vf); lits.push(lf);
+            _outputSolver.addCNF(lits); lits.clear();
+         }
+         // cij+dij
+         // else {
+         //    va = Mi[i][j*2]; la = Lit(va); lits.push(la);
+         //    vb = Mi[i][j*2+1]; lb = Lit(vb); lits.push(lb);
+         //    _outputSolver.addCNF(lits); lits.clear();
+         // }
+      }
+   }
+
+   // ===== inv functional support constraint =======
    // ==================== output solver constraint ====================
 }
 
@@ -612,7 +635,7 @@ void Match::solve() {
       cout << "x = " << x << ", optimal = " << optimal << ", score = " << score << endl;
       if (score <= optimal) continue;
 
-      printOutputSolverValue(outputMi, outputMo, Mbi, Mbo, withBus);
+      // printOutputSolverValue(outputMi, outputMo, Mbi, Mbo, withBus);
       // getchar();
 
       // ==================== add input solver assumption ====================
