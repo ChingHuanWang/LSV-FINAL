@@ -31,8 +31,14 @@ int main(int argc, char** argv)
     cirMgr->getCir(1)->collectInvFuncSupp();
     cirMgr->getCir(2)->collectInvFuncSupp();
 
-    cirMgr->getCir(1)->printInvFuncSupp();
-    cirMgr->getCir(2)->printInvFuncSupp();
+    cout << "input group" << endl;
+    cirMgr->getCir(1)->initInputGrp();
+    cirMgr->getCir(2)->initInputGrp();
+
+    cout << "output group" << endl;
+    cirMgr->getCir(1)->initOutputGrp();
+    cirMgr->getCir(2)->initOutputGrp();
+
 
     // cirMgr->collectUnate();
     // cirMgr->printUnate();
@@ -40,10 +46,10 @@ int main(int argc, char** argv)
     // cirMgr->getCir(1)->printStrucSupp();
     // cirMgr->getCir(2)->printStrucSupp();
     
-    start = time(NULL);
-    match->solve();
-    match->printMatchedMiInvFuncSupp();
-    end = time(NULL);
-    double diff = difftime(end, start);
-    cout << "solve time: " << setprecision(6) << fixed << diff << "s" << endl;
+    // start = time(NULL);
+    // match->solve();
+    // match->printMatchedMiInvFuncSupp();
+    // end = time(NULL);
+    // double diff = difftime(end, start);
+    // cout << "solve time: " << setprecision(6) << fixed << diff << "s" << endl;
 }

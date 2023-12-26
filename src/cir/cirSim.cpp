@@ -66,7 +66,7 @@ CirAigGate::simulate(const CirSimV& simV)
 
 
 void
-CirObj::simulate(vector<size_t>& word)
+CirObj::simulate()
 {
    // for (size_t i = 0; i < _piList.size(); i++) 
    //    _piList[i]->simulate(word[i]);
@@ -92,9 +92,9 @@ CirObj::simulate(vector<size_t>& word)
          gate->printGate();
          gate->setSim0(gate->isIn0Inv() ? ~gate->getIn0Gate()->getSimResult() : gate->getIn0Gate()->getSimResult());
       }
-      else if (gate->isPi()) {
-         gate->setSim0(word[gate->getId() - 1]);
-      }
+      // else if (gate->isPi()) {
+      //    gate->setSim0(word[gate->getId() - 1]);
+      // }
    }
 }
 
@@ -161,7 +161,6 @@ CirObj::fileSim(ifstream& patternFile)
 {
    string str;
    size_t bitNum = 0, piNum = _piList.size(), wordLen = patternLen;
-   vector<size_t> word(piNum, 0);
    _fecGrps->clear(); 
 
    while (getline(patternFile, str)) {
@@ -190,7 +189,7 @@ CirObj::fileSim(ifstream& patternFile)
             _fecGrps->push_back(_dfsList);
             (*_fecGrps)[0].add(0);
          }
-         simulate(word);
+         simulate();
          collectFecGrps();
          bitNum = 0;
          if (_simLog) writeLog(wordLen);
@@ -202,7 +201,7 @@ CirObj::fileSim(ifstream& patternFile)
          _fecGrps->push_back(_dfsList);
          (*_fecGrps)[0].add(0);
       } 
-      simulate(word);
+      simulate();
       collectFecGrps();
       if (_simLog) writeLog(bitNum);
    }
@@ -215,3 +214,81 @@ CirObj::fileSim(ifstream& patternFile)
 /*************************************************/
 /*   Private member functions about Simulation   */
 /*************************************************/
+
+
+
+/*************************************************/
+/*   Public member functions about grouping   */
+/*************************************************/
+
+void
+CirObj::initInputGrp()
+{  
+   for (size_t piIdx = 0 ; piIdx < _piList.size() ; piIdx++) {      
+      bool isInsert = false;
+      for (vector<size_t>* itr : _inputGrp) {
+         if (_invFuncSupp[piIdx].size() == (*itr)[0]) {
+            itr->push_back(piIdx); isInsert = true;
+            break;
+         }
+      }
+      if (!isInsert) {
+         vector<size_t>* tmp = new vector<size_t>;
+         tmp->push_back(_invFuncSupp[piIdx].size()); tmp->push_back(piIdx); 
+         _inputGrp.push_back(tmp);
+      }
+   }
+
+   sort(_inputGrp.begin(), _inputGrp.end(), [](vector<size_t>* a, vector<size_t>* b) {
+      return (*a)[0] < (*b)[0];
+   });
+
+   // debug code
+   for (vector<size_t>* itr : _inputGrp) {
+      for (size_t i = 0 ; i < (*itr).size() ; i++) {
+         if (i == 0) continue;
+         cout << _invFuncSupp[(*itr)[i]].size() << " ";
+      }
+      cout << endl;
+   }
+}
+
+void 
+CirObj::initOutputGrp()
+{
+   for (size_t poIdx = 0 ; poIdx < _poList.size() ; poIdx++) {      
+      bool isInsert = false;
+      for (vector<size_t>* itr : _outputGrp) {
+         if (_funcSupp[poIdx].size() == (*itr)[0]) {
+            itr->push_back(poIdx); isInsert = true;
+            break;
+         }
+      }
+      if (!isInsert) {
+         vector<size_t>* tmp = new vector<size_t>;
+         tmp->push_back(_funcSupp[poIdx].size()); tmp->push_back(poIdx); 
+         _outputGrp.push_back(tmp);
+      }
+   }
+
+   sort(_outputGrp.begin(), _outputGrp.end(), [](vector<size_t>* a, vector<size_t>* b) {
+      return (*a)[0] < (*b)[0];
+   });
+   
+   // debug code
+   for (vector<size_t>* itr : _outputGrp) {
+      for (size_t i = 0 ; i < (*itr).size() ; i++) {
+         if (i == 0) continue;
+         cout << _funcSupp[(*itr)[i]].size() << " ";
+      }
+      cout << endl;
+   }
+}
+
+void
+CirObj::type1Sim()
+{
+   // for (size_t i = 0 ; i < patternLen ; i++) {
+   //    for (auto )
+   // }
+}

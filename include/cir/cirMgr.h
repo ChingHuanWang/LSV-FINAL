@@ -16,6 +16,7 @@
 #include <iostream>
 #include <bitset>
 #include <unordered_map>
+#include <list>
 #include "sat.h"
 
 using namespace std;
@@ -47,7 +48,7 @@ public:
    void optimize();
 
    // Member functions about simulation
-   void simulate(vector<size_t>&);
+   void simulate();
    void randomSim();
    void fileSim(ifstream&);
    void setSimLog(ofstream* logFile) { _simLog = logFile; }
@@ -104,6 +105,13 @@ public:
    void collectSym();
    void printSym() const;
 
+   // member function for grouping input/output 
+   void initInputGrp();
+   void initOutputGrp();
+   void type1Sim();
+   void type2Sim();
+   void type3Sim();
+
 private:
    size_t                    _objIdx;
    size_t                    _maxVarIdx;
@@ -126,6 +134,12 @@ private:
    vector<vector<size_t>>                                  _funcSupp;
    vector<vector<size_t>>                                  _invFuncSupp;
    vector<vector<vector<size_t>>>                          _sym;
+
+   // memeber for grouping input/output
+   // first of each vector<size_t>* is the supp size of that group
+   // rest of the elements are pi/po idx 
+   vector<vector<size_t>*>                                  _inputGrp;
+   vector<vector<size_t>*>                                  _outputGrp;
 
 };
 
@@ -155,6 +169,12 @@ public:
    // member function about unate and symmetry
    void collectUnate() { _objList[0]->collectUnate(); _objList[1]->collectUnate(); }
    void printUnate() const { _objList[0]->printUnate(); _objList[1]->printUnate();}
+
+   // member function about doing I/O grouping simulation
+   void initInputGrp();
+   void initOutputGrp();
+   void inputGrpRefineSim();
+   void outputGrpRefineSim();
 
 private:
    CirConstGate*        _const;
