@@ -44,7 +44,7 @@ int main(int argc, char** argv)
     // cirMgr->getCir(2)->piToPoGateCount();
 
     if (match->checkSol()) {
-        cout << "wrong sol" << endl;
+        cout << "right sol" << endl;
     }
-    else cout << "right sol" << endl;
+    else cout << "wrong sol" << endl;
 }
