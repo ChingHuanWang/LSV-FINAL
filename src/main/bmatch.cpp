@@ -18,8 +18,8 @@ int main(int argc, char** argv)
 
     match->parseInput(argv[1], cirFileList);
     cirMgr->readCircuit(cirFileList[0], cirFileList[1]);
-    cirMgr->getCir(1)->printNetlist();
-    cirMgr->getCir(2)->printNetlist();
+    // cirMgr->getCir(1)->printNetlist();
+    // cirMgr->getCir(2)->printNetlist();
     match->parseBus();
     cirMgr->getCir(1)->collectStrucSupp();
     cirMgr->getCir(2)->collectStrucSupp();
@@ -31,25 +31,20 @@ int main(int argc, char** argv)
     cirMgr->getCir(1)->collectInvFuncSupp();
     cirMgr->getCir(2)->collectInvFuncSupp();
 
-    cout << "input group" << endl;
-    cirMgr->getCir(1)->initInputGrp();
-    cirMgr->getCir(2)->initInputGrp();
-
-    cout << "output group" << endl;
-    cirMgr->getCir(1)->initOutputGrp();
-    cirMgr->getCir(2)->initOutputGrp();
-
-
-    // cirMgr->collectUnate();
-    // cirMgr->printUnate();
-
-    // cirMgr->getCir(1)->printStrucSupp();
-    // cirMgr->getCir(2)->printStrucSupp();
     
-    // start = time(NULL);
-    // match->solve();
-    // match->printMatchedMiInvFuncSupp();
-    // end = time(NULL);
-    // double diff = difftime(end, start);
-    // cout << "solve time: " << setprecision(6) << fixed << diff << "s" << endl;
+    start = time(NULL);
+    match->solve();
+    end = time(NULL);
+    double diff = difftime(end, start);
+    cout << "solve time: " << setprecision(6) << fixed << diff << "s" << endl;
+
+    // cout << "cir 1" << endl;
+    // cirMgr->getCir(1)->piToPoGateCount();
+    // cout << "cir 2" << endl;
+    // cirMgr->getCir(2)->piToPoGateCount();
+
+    if (match->checkSol()) {
+        cout << "wrong sol" << endl;
+    }
+    else cout << "right sol" << endl;
 }

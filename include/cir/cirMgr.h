@@ -89,6 +89,7 @@ public:
    vector<CirPiGate*> getPiList() const { return _piList; }
    vector<CirPoGate*> getPoList() const { return _poList; }
    vector<CirAigGate*> getAigList() const { return _aigList; }
+   vector<CirGate*>    getDfsList() const { return _dfsList; }
    vector<vector<size_t>> getFuncSupp() const { return _funcSupp; }
    vector<vector<size_t>> getInvFuncSupp() const { return _invFuncSupp; }
    void getRedundant(vector<size_t>&, vector<size_t>&, vector<vector<bool>>&);
@@ -111,6 +112,10 @@ public:
    void type1Sim();
    void type2Sim();
    void type3Sim();
+
+   // aig structure parsing
+   size_t piToPoGateCount();
+   size_t poToPiGateCount();
 
 private:
    size_t                    _objIdx;

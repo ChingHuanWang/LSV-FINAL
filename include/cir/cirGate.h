@@ -128,6 +128,7 @@ public:
    const set<CirGate*>::iterator suppEnd() { return _strucSupp.end(); }
    void setVar(int v)  { _var = v; }
    int  getVar() const { return _var; }
+   virtual size_t piToPoGateCount();
 
 private:
    size_t _id;
@@ -204,6 +205,7 @@ public:
    // function for boolean matching
    void collectStrucSupp();
    void printStrucSupp() const;
+   size_t piToPoGateCount();
 
 private:
    CirGateV _in0;

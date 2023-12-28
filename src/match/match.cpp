@@ -874,3 +874,129 @@ void Match::write() {
 
    // Todo: write file
 }
+
+
+bool 
+Match::checkSol() const 
+{
+   SatSolver checker;
+   checker.initialize();
+   vector<CirGate*> dfs1 = cirMgr->getCir(1)->getDfsList();
+   vector<CirGate*> dfs2 = cirMgr->getCir(2)->getDfsList();
+   vector<CirPiGate*> pi1 = cirMgr->getCir(1)->getPiList();
+   vector<CirPiGate*> pi2 = cirMgr->getCir(2)->getPiList();
+   vector<CirPoGate*> po1 = cirMgr->getCir(1)->getPoList();
+   vector<CirPoGate*> po2 = cirMgr->getCir(2)->getPoList();
+
+   Var va, vb, vh;
+   Lit la, lb, lh;
+   vec<Lit> lits;
+   // init var for cir1 and cir 2
+   for (CirGate* g : dfs1) {
+      g->setVar(checker.newVar());
+   }
+   for (CirGate* g : dfs2) {
+      g->setVar(checker.newVar());
+   }
+
+   // gen aig cnf for cir1 and cir 2
+   // cir 1
+   for (CirGate* g : dfs1) {
+      if (g->isAig()) {
+         checker.addAigCNF(g->getVar(), g->getIn0Gate()->getVar(), g->isIn0Inv(),
+                           g->getIn1Gate()->getVar(), g->isIn1Inv());
+      }
+      else if (g->isPo()) {
+         va = g->getVar();
+         vb = g->getIn0Gate()->getVar();
+         la = g->isIn0Inv() ? ~Lit(va) : Lit(vb);
+         lb = Lit(vb);
+         lits.push(la); lits.push(~lb);
+         checker.addCNF(lits); lits.clear();
+         lits.push(~la); lits.push(lb);
+         checker.addCNF(lits); lits.clear();
+      }
+   }
+
+   // cir 2
+   for (CirGate* g : dfs2) {
+      if (g->isAig()) {
+         checker.addAigCNF(g->getVar(), g->getIn0Gate()->getVar(), g->isIn0Inv(),
+                           g->getIn1Gate()->getVar(), g->isIn1Inv());
+      }
+      else if (g->isPo()) {
+         va = g->getVar();
+         vb = g->getIn0Gate()->getVar();
+         la = g->isIn0Inv() ? ~Lit(va) : Lit(vb);
+         lb = Lit(vb);
+         lits.push(la); lits.push(~lb);
+         checker.addCNF(lits); lits.clear();
+         lits.push(~la); lits.push(lb);
+         checker.addCNF(lits); lits.clear();
+      }
+   }
+
+   // add constraint from result mi/mo
+   // add pi constraint
+   for (size_t i = 0 ; i < pi2.size() ; i++) {
+      for (size_t j = 0 ; j < pi1.size() ; j++) {
+         // xi == yj -> (~xi+yj)(xi+yj)
+         if (_resultMi[i][j*2]) {
+            la = ~Lit(pi2[i]->getVar());
+            lb = Lit(pi1[j]->getVar());
+            lits.push(la); lits.push(lb);
+            checker.addCNF(lits); lits.clear();
+            la = Lit(pi2[i]->getVar());
+            lb = ~Lit(pi1[j]->getVar());
+            lits.push(la); lits.push(lb);
+            checker.addCNF(lits); lits.clear();
+         }
+         // xi == ~yj -> (~xi+~yj)(xi+yj)
+         else if (_resultMi[i][j*2+1]) {
+            la = Lit(pi2[i]->getVar());
+            lb = Lit(pi1[j]->getVar());
+            lits.push(la); lits.push(lb);
+            checker.addCNF(lits); lits.clear();
+            la = ~Lit(pi2[i]->getVar());
+            lb = ~Lit(pi1[j]->getVar());
+            lits.push(la); lits.push(lb);
+            checker.addCNF(lits); lits.clear();
+         }
+      }
+      if (_resultMi[i][pi1.size()*2]) {
+         checker.assumeProperty(pi2[i]->getVar(), false);
+      }
+      if (_resultMi[i][pi1.size()*2+1]) {
+         checker.assumeProperty(pi2[i]->getVar(), true);
+      }
+   }
+   // add po constraint
+   for (size_t i = 0 ; i < po2.size() ; i++) {
+      for (size_t j = 0 ; j < po1.size() ; j++) {
+         // fi == gj -> (~fi+gj)(fi+gj)
+         if (_resultMi[i][j*2]) {
+            la = ~Lit(po2[i]->getVar());
+            lb = Lit(po1[j]->getVar());
+            lits.push(la); lits.push(lb);
+            checker.addCNF(lits); lits.clear();
+            la = Lit(po2[i]->getVar());
+            lb = ~Lit(po1[j]->getVar());
+            lits.push(la); lits.push(lb);
+            checker.addCNF(lits); lits.clear();
+         }
+         // fi == ~gj -> (~fi+~gj)(fi+gj)
+         else if (_resultMi[i][j*2+1]) {
+            la = Lit(po2[i]->getVar());
+            lb = Lit(po1[j]->getVar());
+            lits.push(la); lits.push(lb);
+            checker.addCNF(lits); lits.clear();
+            la = ~Lit(po2[i]->getVar());
+            lb = ~Lit(po1[j]->getVar());
+            lits.push(la); lits.push(lb);
+            checker.addCNF(lits); lits.clear();
+         }
+      }
+   }
+
+   return checker.assumpSolve();
+}

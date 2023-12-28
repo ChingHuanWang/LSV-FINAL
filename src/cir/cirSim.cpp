@@ -292,3 +292,40 @@ CirObj::type1Sim()
    //    for (auto )
    // }
 }
+
+
+// aig structure parsing
+size_t
+CirGate::piToPoGateCount()
+{
+   size_t gateCount = 0;
+   for (CirGateV v : _foutList) {
+      CirGate* fanout = v.getGate();
+      gateCount += fanout->piToPoGateCount();
+   }
+   return gateCount;
+}
+
+size_t 
+CirPoGate::piToPoGateCount()
+{
+   return 1;
+}
+
+
+size_t 
+CirObj::piToPoGateCount()
+{
+   size_t gateCount = 0;
+   for (CirPiGate* pi : _piList) {
+      gateCount = pi->piToPoGateCount();
+      cout << "pi name : " << pi->getName() 
+           << ", gate count = " << gateCount << endl;
+   }
+}
+
+size_t 
+CirObj::poToPiGateCount()
+{
+
+}

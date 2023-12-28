@@ -25,6 +25,7 @@ class Match {
 
         void printMatchedMiInvFuncSupp() const;
         void write();
+        bool checkSol() const;
 
     private:
         char*                           _outFile;
