@@ -129,6 +129,7 @@ public:
    void setVar(int v)  { _var = v; }
    int  getVar() const { return _var; }
    virtual size_t piToPoGateCount();
+   virtual size_t poToPiGateCount();
    virtual size_t piLongestPath();
    virtual size_t poLongestPath() { return 0; };
 
@@ -169,6 +170,7 @@ public:
    size_t getSimBit(const size_t i) { return (_sim0() >> i) & const1; }
 
    // function for boolean matching
+   size_t poToPiGateCount();
    void collectStrucSupp();
    size_t poLongestPath();
 
@@ -209,6 +211,7 @@ public:
    void collectStrucSupp();
    void printStrucSupp() const;
    size_t piToPoGateCount();
+   size_t poToPiGateCount();
    size_t piLongestPath();
    size_t poLongestPath();
 
@@ -255,6 +258,7 @@ public:
    size_t getSimResult() const { return (_sim0() & _sim1()); }
 
    // function for boolean matching
+   size_t poToPiGateCount();
    void collectStrucSupp();
    size_t poLongestPath();
 

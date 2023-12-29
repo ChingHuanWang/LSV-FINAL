@@ -470,6 +470,18 @@ CirObj::getRedundant(vector<size_t>& input, vector<size_t>& output, vector<vecto
 
    redundant.resize(output.size(), vector<bool>(input.size(), true));
 
+   // ===== check input and output is correct =====
+   // cout << "input: ";
+   // for (size_t i = 0; i < input.size(); ++i)
+   //    cout << input[i];
+   // cout << endl;
+   // cout << "output: ";
+   // for (size_t i = 0; i < output.size(); ++i)
+   //    cout << output[i];
+   // cout << endl;
+   // getchar();
+   // ===== check input and output is correct =====
+
    for (size_t i = 0; i < redundant.size(); ++i) {
       for (size_t j = 0; j < _funcSupp[i].size(); ++j) {
          redundant[i][_funcSupp[i][j] - 1] = false;
@@ -913,4 +925,28 @@ CirObj::printUnate() const
       }
       cout << endl;
    }
+}
+
+void
+CirObj::collectPiGateCount() {
+
+   // check if already count
+   if (_piGateCount.size() != 0) return;
+
+   _piGateCount.resize(_piList.size());
+   for (size_t i = 0; i < _piGateCount.size(); ++i)
+      _piGateCount[i] = _piList[i]->piToPoGateCount();
+   
+}
+
+void
+CirObj::collectPoGateCount() {
+
+   // check if already count
+   if (_poGateCount.size() != 0) return;
+
+   _poGateCount.resize(_poList.size());
+   for (size_t i = 0; i < _poGateCount.size(); ++i)
+      _poGateCount[i] = _poList[i]->poToPiGateCount();
+   
 }

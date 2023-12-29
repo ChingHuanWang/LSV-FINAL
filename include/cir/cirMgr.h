@@ -116,10 +116,14 @@ public:
    // aig structure parsing
    size_t piToPoGateCount();
    size_t poToPiGateCount();
+   void collectPiGateCount();
+   void collectPoGateCount();
    void piLongestPath();
    void poLongestPath();
    vector<size_t> getPiLongestPathList() { return _piLongestPathList; }
    vector<size_t> getPoLongestPathList() { return _poLongestPathList; }
+   vector<size_t> getPiGateCount() { return _piGateCount; }
+   vector<size_t> getPoGateCount() { return _poGateCount; }
 
 private:
    size_t                    _objIdx;
@@ -143,6 +147,8 @@ private:
    vector<vector<size_t>>                                  _funcSupp;
    vector<vector<size_t>>                                  _invFuncSupp;
    vector<vector<vector<size_t>>>                          _sym;
+   vector<size_t>                                          _piGateCount;
+   vector<size_t>                                          _poGateCount;
 
    // member for grouping input/output
    // first of each vector<size_t>* is the supp size of that group

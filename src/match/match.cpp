@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <algorithm>
 #include "match.h"
 #include "genAag.h"
 #include "cirMgr.h"
@@ -174,7 +175,8 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
    size_t piNum[2] = {cirMgr->getCir(1)->getPiNum(), cirMgr->getCir(2)->getPiNum()};
    size_t gateNum[2] = {cirMgr->getCir(1)->getGateNum(), cirMgr->getCir(2)->getGateNum()};
 
-
+   vector<vector<CirPiGate*>> piList = {cirMgr->getCir(1)->getPiList(), cirMgr->getCir(2)->getPiList()};
+   vector<vector<CirPoGate*>> poList = {cirMgr->getCir(1)->getPoList(), cirMgr->getCir(2)->getPoList()};
    vector<vector<bool>> funcSupp1(poNum[0], vector<bool>(piNum[0], false));
    vector<vector<bool>> funcSupp2(poNum[1], vector<bool>(piNum[1], false));
    vector<vector<int>> funcSuppSize(2, vector<int>(poNum[0], 0));
@@ -193,22 +195,36 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
    cirMgr->getCir(2)->collectInvFuncSupp();
    cirMgr->getCir(1)->poLongestPath();
    cirMgr->getCir(2)->poLongestPath();
+   orderPrimary();
+
    vector<vector<vector<size_t>>> funcSupp = {cirMgr->getCir(1)->getFuncSupp(), cirMgr->getCir(2)->getFuncSupp()};
    vector<vector<vector<size_t>>> invFuncSupp = {cirMgr->getCir(1)->getInvFuncSupp(), cirMgr->getCir(2)->getInvFuncSupp()};
+   vector<vector<size_t>> invPiOrder, invPoOrder;
+   invPiOrder.resize(2); invPoOrder.resize(2);
+   for (size_t i = 0; i < 2; ++i) {
+
+      invPiOrder[i].resize(_piOrder[i].size());
+      for (size_t j = 0; j < invPiOrder[i].size(); ++j)
+         invPiOrder[i][_piOrder[i][j]] = j;
+
+      invPoOrder[i].resize(_poOrder[i].size());
+      for (size_t j = 0; j < invPoOrder[i].size(); ++j)
+         invPoOrder[i][_poOrder[i][j]] = j;
+   }
 
    // ==================== output solver variable ====================
    // 1. output mapping matrix
    // 2. input mapping matrix
    // 3. allow projection variable
-   for (size_t i = 0; i < Mi.size(); ++i) {
-      for (size_t j = 0; j < Mi[i].size(); ++j) {
-         Mi[i][j] = _outputSolver.newVar();
+   for (size_t i = Mi.size(); i > 0; --i) {
+      for (size_t j = 0; j < Mi[i - 1].size(); ++j) {
+         Mi[i - 1][j] = _outputSolver.newVar();
       }
    }
 
-   for (size_t i = 0; i < Mo.size(); ++i) {
-      for (size_t j = 0; j < Mo[i].size(); ++j) {
-         Mo[i][j] = _outputSolver.newVar();
+   for (size_t i = Mo.size(); i > 0; --i) {
+      for (size_t j = 0; j < Mo[i - 1].size(); ++j) {
+         Mo[i - 1][j] = _outputSolver.newVar();
       }
    }
 
@@ -294,9 +310,9 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
             // cout << (_poBus[1][i][k] - 1) << " mapped to ";
             for (size_t l = 0; l < _poBus[0][j].size(); ++l) {
                // cout << (_poBus[0][j][l] - 1) << " or ";
-               vb = Mo[_poBus[1][i][k] - 1][(_poBus[0][j][l] - 1) * 2]; lb = Lit(vb);
+               vb = Mo[invPoOrder[1][_poBus[1][i][k] - 1]][invPoOrder[0][_poBus[0][j][l] - 1] * 2]; lb = Lit(vb);
                lits.push(lb);
-               vb = Mo[_poBus[1][i][k] - 1][(_poBus[0][j][l] - 1) * 2 + 1]; lb = Lit(vb);
+               vb = Mo[invPoOrder[1][_poBus[1][i][k] - 1]][invPoOrder[0][_poBus[0][j][l] - 1] * 2 + 1]; lb = Lit(vb);
                lits.push(lb);
             }
             _outputSolver.addCNF(lits); lits.clear();
@@ -328,16 +344,16 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
             // cout << (_poBus[1][i][k] - 1) << " mapped to ";
             for (size_t l = 0; l < _piBus[0][j].size(); ++l) {
                // cout << (_poBus[0][j][l] - 1) << " or ";
-               vb = Mi[_piBus[1][i][k] - 1][(_piBus[0][j][l] - 1) * 2]; lb = Lit(vb);
+               vb = Mi[invPiOrder[1][_piBus[1][i][k] - 1]][invPiOrder[0][_piBus[0][j][l] - 1] * 2]; lb = Lit(vb);
                lits.push(lb);
-               vb = Mi[_piBus[1][i][k] - 1][(_piBus[0][j][l] - 1) * 2 + 1]; lb = Lit(vb);
+               vb = Mi[invPiOrder[1][_piBus[1][i][k] - 1]][invPiOrder[0][_piBus[0][j][l] - 1] * 2 + 1]; lb = Lit(vb);
                lits.push(lb);
             }
             for (size_t l = Mi[0].size() - 2; l < Mi[0].size(); ++l) {
                // cout << (_poBus[0][j][l] - 1) << " or ";
-               vb = Mi[_piBus[1][i][k] - 1][l]; lb = Lit(vb);
+               vb = Mi[invPiOrder[1][_piBus[1][i][k] - 1]][l]; lb = Lit(vb);
                lits.push(lb);
-               vb = Mi[_piBus[1][i][k] - 1][l]; lb = Lit(vb);
+               vb = Mi[invPiOrder[1][_piBus[1][i][k] - 1]][l]; lb = Lit(vb);
                lits.push(lb);
             }
             // cout << endl;
@@ -350,9 +366,9 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
    // ===== functional support constraint =====
    // if |FuncSupp(f_i)| > |FuncSupp(g_j)|, then f_i cannot map to g_j
    // else { if x_i in FuncSupp(f_i), then x_i is mapped to y_j in FuncSupp(g_j) }
-   for (size_t j = 0; j < poNum[1]; ++j) {
-      for (size_t i = 0; i < poNum[0]; ++i) {
-         if (funcSupp[0][i].size() > funcSupp[1][j].size()) {
+   for (size_t j = 0; j < _poOrder[1].size(); ++j) {
+      for (size_t i = 0; i < _poOrder[0].size(); ++i) {
+         if (funcSupp[0][_poOrder[0][i]].size() > funcSupp[1][_poOrder[1][j]].size()) {
             vf = Mo[j][i * 2]; lf = ~Lit(vf); lits.push(lf);
             _outputSolver.addCNF(lits); lits.clear();
             vf = Mo[j][i * 2 + 1]; lf = ~Lit(vf); lits.push(lf);
@@ -365,13 +381,13 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
 
    // ===== inv functional support constraint =======
    // |invFuncSupp(xi)| vs |invFuncSupp(xj)|
-   for (size_t i = 0 ; i < piNum[0] ; i++) {
-      for (size_t j = 0 ; j < piNum[1] ; j++) {
+   for (size_t j = 0 ; j < _piOrder[1].size() ; ++j) {
+      for (size_t i = 0 ; i < _piOrder[0].size() ; ++i) {
          // ~cij~dij
-         if (invFuncSupp[0][i].size() != invFuncSupp[1][j].size()) {
-            vf = Mi[j][i*2]; lf = ~Lit(vf); lits.push(lf);
+         if (invFuncSupp[0][_piOrder[0][i]].size() > invFuncSupp[1][_piOrder[1][j]].size()) {
+            vf = Mi[j][i * 2]; lf = ~Lit(vf); lits.push(lf);
             _outputSolver.addCNF(lits); lits.clear();
-            vf = Mi[j][i*2+1]; lf = ~Lit(vf); lits.push(lf);
+            vf = Mi[j][i * 2 + 1]; lf = ~Lit(vf); lits.push(lf);
             _outputSolver.addCNF(lits); lits.clear();
          }
       }
@@ -381,33 +397,33 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
    // ==================== output solver constraint ====================
 
    // ===== longest path matching ==============
-   vector<size_t> long1 = cirMgr->getCir(1)->getPoLongestPathList();
-   vector<size_t> long2 = cirMgr->getCir(2)->getPoLongestPathList();
-   vector<CirPoGate*> po1 = cirMgr->getCir(1)->getPoList();
-   vector<CirPoGate*> po2 = cirMgr->getCir(2)->getPoList();
-   vector<bool> match(poNum[0], 0);
-   // if len = 0, po is connected to const 
-   // else if len = 1, po is directly connected to pi -> can arbitrary match such pair 
-   for (size_t i = 0 ; i < poNum[1] ; i++) {
-      for (size_t j = 0 ; j < poNum[0] ; j++) {
-         if ((long2[i] == 1 && long1[j] == 1) || (long2[i] == 2 && long1[j] == 2)) {
-            if (!match[j]) {
-               // sol 1
-               // lf = po2[i]->getIn0Gate()->isIn0Inv() == po1[j]->getIn0Gate()->isIn0Inv() ? Lit(Mo[i][j*2]) : Lit(Mo[i][j*2+1]);
-               // lits.push(lf);
-               // _outputSolver.addCNF(lits); lits.clear();
+   // vector<size_t> long1 = cirMgr->getCir(1)->getPoLongestPathList();
+   // vector<size_t> long2 = cirMgr->getCir(2)->getPoLongestPathList();
+   // vector<CirPoGate*> po1 = cirMgr->getCir(1)->getPoList();
+   // vector<CirPoGate*> po2 = cirMgr->getCir(2)->getPoList();
+   // vector<bool> match(poNum[0], 0);
+   // // if len = 0, po is connected to const 
+   // // else if len = 1, po is directly connected to pi -> can arbitrary match such pair 
+   // for (size_t i = 0 ; i < poNum[1] ; i++) {
+   //    for (size_t j = 0 ; j < poNum[0] ; j++) {
+   //       if ((long2[i] == 1 && long1[j] == 1) || (long2[i] == 2 && long1[j] == 2)) {
+   //          if (!match[j]) {
+   //             // sol 1
+   //             // lf = po2[i]->getIn0Gate()->isIn0Inv() == po1[j]->getIn0Gate()->isIn0Inv() ? Lit(Mo[i][j*2]) : Lit(Mo[i][j*2+1]);
+   //             // lits.push(lf);
+   //             // _outputSolver.addCNF(lits); lits.clear();
 
-               // sol 2
-               la = Lit(Mo[i][j*2]); lb = Lit(Mo[i][j*2+1]);
-               lits.push(la); lits.push(lb);
-               _outputSolver.addCNF(lits); lits.clear();
-               lits.push(~la); lits.push(~lb);
-               _outputSolver.addCNF(lits); lits.clear();
-               match[j] = true; break;
-            }
-         }
-      }
-   }
+   //             // sol 2
+   //             la = Lit(Mo[i][j*2]); lb = Lit(Mo[i][j*2+1]);
+   //             lits.push(la); lits.push(lb);
+   //             _outputSolver.addCNF(lits); lits.clear();
+   //             lits.push(~la); lits.push(~lb);
+   //             _outputSolver.addCNF(lits); lits.clear();
+   //             match[j] = true; break;
+   //          }
+   //       }
+   //    }
+   // }
    // ===== longest path matching ==============
 
 }
@@ -416,15 +432,15 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
 
 
    vec<Lit> lits;
-   Lit lf, la, lb, lc;
    Var vf, va, vb, vc;
+   Lit lf, la, lb, lc;
    size_t i0, i1;
    size_t poNum[2] = {cirMgr->getCir(1)->getPoNum(), cirMgr->getCir(2)->getPoNum()};
    size_t piNum[2] = {cirMgr->getCir(1)->getPiNum(), cirMgr->getCir(2)->getPiNum()};
    size_t gateNum[2] = {cirMgr->getCir(1)->getGateNum(), cirMgr->getCir(2)->getGateNum()};
-   vector<vector<CirPoGate*>> poList = {cirMgr->getCir(1)->getPoList(), cirMgr->getCir(2)->getPoList()};
+   vector<vector<CirPiGate*>> piList = {cirMgr->getCir(1)->getPiList(), cirMgr->getCir(2)->getPiList()};
    vector<vector<CirAigGate*>> aigList = {cirMgr->getCir(1)->getAigList(), cirMgr->getCir(2)->getAigList()};
-
+   vector<vector<CirPoGate*>> poList = {cirMgr->getCir(1)->getPoList(), cirMgr->getCir(2)->getPoList()};
 
    // ================== input solver variable ==================
    // 1. aig constraint
@@ -432,8 +448,15 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
    // 3. intermediate variable h
    // 4. output mapping matrix
    // recieve output solver solution
-   _inputSolver.addCirCNF(cirMgr->getCir(1), 0);
-   _inputSolver.addCirCNF(cirMgr->getCir(2), gateNum[0]);
+
+   for (size_t i = 0; i < 2; ++i) {
+      for (size_t j = 0; j < _piOrder[i].size(); ++j)
+         piList[i][_piOrder[i][j]]->setVar(_inputSolver.newVar());
+      for (size_t j = 0; j < aigList[i].size(); ++j)
+         aigList[i][j]->setVar(_inputSolver.newVar());
+      for (size_t j = 0; j < _poOrder[i].size(); ++j)
+         poList[i][_poOrder[i][j]]->setVar(_inputSolver.newVar());
+   }
 
    for (size_t i = 0; i < mi.size(); ++i)
       for (size_t j = 0; j < mi[i].size(); ++j)
@@ -449,13 +472,37 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
    // ================== input solver variable ==================
 
    // ================== input solver constraint ==================
+
+   for (size_t i = 0 ; i < 2 ; i++) {
+
+      for (CirAigGate* aig : aigList[i]) {
+         _inputSolver.addAigCNF(
+            aig->getVar(),
+            aig->getIn0Gate()->getVar(),
+            aig->isIn0Inv(),
+            aig->getIn1Gate()->getVar(),
+            aig->isIn1Inv()
+         );
+      }
+
+      for (CirPoGate* po : poList[i]) {
+         va = po->getVar(); la = po->isIn0Inv()? ~Lit(va) : Lit(va);
+         vb = po->getIn0Gate()->getVar(); lb = Lit(vb);
+         lits.push(la); lits.push(~lb);
+         _inputSolver.addCNF(lits); lits.clear();
+         lits.push(~la); lits.push(lb);
+         _inputSolver.addCNF(lits); lits.clear();
+      }
+   }
+
+   
    // x_i and y_j pair
    // aij -> xi == yj
    for (size_t j = 0; j < mi.size(); ++j) {
-      for (size_t i = 0; i < piNum[0] * 2; ++i) {
+      for (size_t i = 0; i < piList[0].size() * 2; ++i) {
          vf = mi[j][i]; lf = Lit(vf);
-         va = i / 2 + 1; la = (i & 1)? ~Lit(va):Lit(va);
-         vb = j + 1 + gateNum[0]; lb = Lit(vb);
+         va = piList[0][_piOrder[0][i / 2]]->getVar(); la = (i & 1)? ~Lit(va):Lit(va);
+         vb = piList[1][_piOrder[1][j]]->getVar(); lb = Lit(vb);
          // cout << "vf = " << vf << ", va = " << va << ", vb = " << vb << endl;
          lits.push(~lf); lits.push(~la); lits.push(lb);
          _inputSolver.addCNF(lits); lits.clear();
@@ -467,9 +514,9 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
    // 0 or 1 and y_j pair
    // a_1_m_I+1 -> 0 == yj
    for (size_t j = 0; j < mi.size(); ++j) {
-      for (size_t i = piNum[0] * 2; i < mi[j].size(); ++i) {
+      for (size_t i = piList[0].size() * 2; i < mi[j].size(); ++i) {
          vf = mi[j][i]; lf = Lit(vf);
-         va = j + 1 + gateNum[0]; la = (i & 1)? ~Lit(va):Lit(va);
+         va = piList[1][_piOrder[1][j]]->getVar(); la = (i & 1)? ~Lit(va):Lit(va);
          // cout << "vf = " << vf << ", va = " << va << endl;
          lits.push(~lf); lits.push(~la);
          _inputSolver.addCNF(lits); lits.clear();
@@ -483,8 +530,8 @@ void Match::inputSolverInit(vector<vector<Var>>& mi, vector<vector<Var>>& h, vec
       for (size_t i = 0; i < mo[j].size(); ++i) {
          vf = mo[j][i]; lf = Lit(vf);
          va = h[j][i]; la = Lit(va);
-         vb = poList[0][i/2]->getId(); lb = (i & 1)? ~Lit(vb):Lit(vb);
-         vc = poList[1][j]->getId() + gateNum[0]; lc = Lit(vc);
+         vb = poList[0][_poOrder[0][i / 2]]->getVar(); lb = (i & 1)? ~Lit(vb):Lit(vb);
+         vc = poList[1][_poOrder[1][j]]->getVar(); lc = Lit(vc);
          // cout << "vf = " << vf << ", va = " << va << ", vb = " << vb << ", vc = " << vc << endl;
          lits.push(~lf); lits.push(~la); lits.push(lb); lits.push(lc);
          _inputSolver.addCNF(lits); lits.clear();
@@ -526,8 +573,9 @@ void Match::solve() {
    size_t poNum[2] = {cirMgr->getCir(1)->getPoNum(), cirMgr->getCir(2)->getPoNum()};
    size_t piNum[2] = {cirMgr->getCir(1)->getPiNum(), cirMgr->getCir(2)->getPiNum()};
    size_t gateNum[2] = {cirMgr->getCir(1)->getGateNum(), cirMgr->getCir(2)->getGateNum()};
-   vector<vector<CirPoGate*>> poList = {cirMgr->getCir(1)->getPoList(), cirMgr->getCir(2)->getPoList()};
+   vector<vector<CirPiGate*>> piList = {cirMgr->getCir(1)->getPiList(), cirMgr->getCir(2)->getPiList()};
    vector<vector<CirAigGate*>> aigList = {cirMgr->getCir(1)->getAigList(), cirMgr->getCir(2)->getAigList()};
+   vector<vector<CirPoGate*>> poList = {cirMgr->getCir(1)->getPoList(), cirMgr->getCir(2)->getPoList()};
 
    vector<vector<Var>> outputMo(poNum[1], vector<Var>(poNum[0] * 2, 0));
    vector<vector<Var>> outputMi(piNum[1], vector<Var>((piNum[0] + 1) * 2, 0));
@@ -555,7 +603,7 @@ void Match::solve() {
 
    // ================== solve ==================
    int optimal = 0, score;
-   bool proj = false;
+   bool proj = true;
    char inputcheck;
    vector<size_t> counterExampleIn, counterExampleOut;
    vector<vector<bool>> red1, red2;
@@ -628,39 +676,38 @@ void Match::solve() {
       // calculate the redundant var, if x3 is redunda, then x3 is recorded in red
       counterExampleIn.resize(piNum[0], 0); counterExampleOut.resize(poNum[0], 0);
       for (size_t i = 0; i < piNum[0]; ++i)
-         counterExampleIn[i] = (size_t)_inputSolver.getValue(i + 1);
+         counterExampleIn[i] = (size_t)_inputSolver.getValue(piList[0][i]->getVar());
       for (size_t i = 0; i < poNum[0]; ++i)
-         counterExampleOut[i] = (size_t)_inputSolver.getValue(gateNum[0] - poNum[0] + i + 1);
+         counterExampleOut[i] = (size_t)_inputSolver.getValue(poList[0][i]->getVar());
       cirMgr->getCir(1)->getRedundant(counterExampleIn, counterExampleOut, red1);
 
       counterExampleIn.resize(piNum[1], 0); counterExampleOut.resize(poNum[1], 0);
       for (size_t i = 0; i < piNum[1]; ++i)
-         counterExampleIn[i] = (size_t)_inputSolver.getValue(i + 1 + gateNum[0]);
+         counterExampleIn[i] = (size_t)_inputSolver.getValue(piList[1][i]->getVar());
       for (size_t i = 0; i < poNum[1]; ++i)
-         counterExampleOut[i] = (size_t)_inputSolver.getValue(gateNum[0] + gateNum[1] - poNum[1] + i + 1);
+         counterExampleOut[i] = (size_t)_inputSolver.getValue(poList[1][i]->getVar());
       cirMgr->getCir(2)->getRedundant(counterExampleIn, counterExampleOut, red2);
 
       // cout << "==================== add learned clause ====================" << endl;
       // refer to strenthen learning ex5
-      for (size_t q = 0; q < poList[1].size(); ++q) {
-         for (size_t p = 0; p < poList[0].size(); ++p) {
-            // cout << "p = " << p << ", q = " << q << endl;
-            vf = (_inputSolver.getValue(poList[0][p]->getId()) != _inputSolver.getValue(poList[1][q]->getId() + gateNum[0]))? outputMo[q][2 * p]:outputMo[q][2 * p + 1];
+      for (size_t q = 0; q < _poOrder[1].size(); ++q) {
+         for (size_t p = 0; p < _poOrder[0].size(); ++p) {
+            vf = (_inputSolver.getValue(poList[0][_poOrder[0][p]]->getVar()) != _inputSolver.getValue(poList[1][_poOrder[1][q]]->getVar()))? outputMo[q][2 * p]:outputMo[q][2 * p + 1];
             lf = Lit(vf); lits.push(~lf);
             // cout << "literal: " << vf;
-            for (size_t j = 0; j < piNum[1]; ++j) {
-               for (size_t i = 0; i < piNum[0]; ++i) {
-                  if (red1[p][i] || red2[q][j]) continue;
+            for (size_t j = 0; j < _piOrder[1].size(); ++j) {
+               for (size_t i = 0; i < _piOrder[0].size(); ++i) {
+                  if (red1[_poOrder[0][p]][_piOrder[0][i]] || red2[_poOrder[1][q]][_piOrder[1][j]]) continue;
                   // cout << "i = " << i << ", j = " << j << endl;
-                  va = (_inputSolver.getValue(i + 1) != _inputSolver.getValue(j + 1 + gateNum[0]))? outputMi[j][2 * i]:outputMi[j][2 * i + 1];
+                  va = (_inputSolver.getValue(piList[0][_piOrder[0][i]]->getVar()) != _inputSolver.getValue(piList[1][_piOrder[1][j]]->getVar()))? outputMi[j][2 * i]:outputMi[j][2 * i + 1];
                   la = Lit(va); lits.push(la);
                   // cout << " + " << va;
                }
             }
             for (size_t i = 0; i < piNum[1]; ++i) {
-               if (red2[q][i]) continue;
+               if (red2[_poOrder[1][q]][_piOrder[1][i]]) continue;
 
-               va = (_inputSolver.getValue(i + 1 + gateNum[0]))? outputMi[i][2 * piNum[0]]:outputMi[i][2 * piNum[0] + 1];
+               va = (_inputSolver.getValue(piList[1][_piOrder[1][i]]->getVar()))? outputMi[i][2 * piNum[0]]:outputMi[i][2 * piNum[0] + 1];
                la = Lit(va); lits.push(la);
                // cout << " + " << va;
             }
@@ -1067,4 +1114,99 @@ Match::printMatch() const
          cout << "(const, " << pi2[i]->getName() << ")\n"; 
       }
    }
+}
+
+void
+Match::orderPrimary() {
+
+   cirMgr->getCir(1)->collectPiGateCount();
+   cirMgr->getCir(2)->collectPiGateCount();
+   cirMgr->getCir(1)->collectPoGateCount();
+   cirMgr->getCir(2)->collectPoGateCount();
+   
+   vector<vector<CirPiGate*>> piList = {cirMgr->getCir(1)->getPiList(), cirMgr->getCir(2)->getPiList()};
+   vector<vector<CirPoGate*>> poList = {cirMgr->getCir(1)->getPoList(), cirMgr->getCir(2)->getPoList()};
+   vector<vector<vector<size_t>>> invFuncSupp = {cirMgr->getCir(1)->getInvFuncSupp(), cirMgr->getCir(2)->getInvFuncSupp()};
+   vector<vector<vector<size_t>>> funcSupp = {cirMgr->getCir(1)->getFuncSupp(), cirMgr->getCir(2)->getFuncSupp()};
+   vector<vector<size_t>> piGateCount = {cirMgr->getCir(1)->getPiGateCount(), cirMgr->getCir(2)->getPiGateCount()};
+   vector<vector<size_t>> poGateCount = {cirMgr->getCir(1)->getPoGateCount(), cirMgr->getCir(2)->getPoGateCount()};
+   size_t count;
+   // ===== order PI according to =====
+   // 1. functional support size
+   // 2. TPO gate number
+
+   // step 1. generate index vector of PI
+   _piOrder.resize(2);
+   for (size_t i = 0; i < 2; ++i) {
+      count = 0;
+      _piOrder[i].resize(piList[i].size());
+      generate(_piOrder[i].begin(), _piOrder[i].end(), [&](){ return count++; });
+   }
+
+   // step 2. order PI
+   for (size_t i = 0; i < 2; ++i)
+      sort(_piOrder[i].begin(), _piOrder[i].end(), [i, invFuncSupp, piGateCount](size_t idx1, size_t idx2) {
+         if (invFuncSupp[i][idx1].size() < invFuncSupp[i][idx2].size()) return true;
+         if (invFuncSupp[i][idx1].size() > invFuncSupp[i][idx2].size()) return false;
+         return piGateCount[i][idx1] < piGateCount[i][idx2];
+      });
+   
+   // ========== check ==========
+   cout << "piOrder:\n";
+   for (size_t i = 0; i < 2; ++i) {
+      for (size_t j = 0; j < piList[i].size(); ++j) {
+         cout << "circuit " << i + 1 << ", " << j << "-th PI: ";
+         cout << "funcSuppSize: " << invFuncSupp[i][j].size() << ", ";
+         cout << "gateCount: " << piGateCount[i][j] << "\n";
+      }
+      cout << endl;
+   }
+   for (size_t i = 0; i < 2; ++i) {
+      cout << "order of circuit " << i + 1 << ": ";
+      for (size_t j = 0; j < _piOrder[i].size(); ++j) {
+         cout << _piOrder[i][j] << " ";
+      }
+      cout << endl;
+   }
+   // getchar();
+   // ========== check ==========
+
+   // ===== order PO according to =====
+   // 1. functional support size
+   // 2. TPI gate number (unwritten)
+
+   // step 1. generate index vector of PO
+   _poOrder.resize(2);
+   for (size_t i = 0; i < 2; ++i) {
+      count = 0;
+      _poOrder[i].resize(poList[i].size());
+      generate(_poOrder[i].begin(), _poOrder[i].end(), [&](){ return count++; });
+   }
+
+   // step 2. order PO
+   for (size_t i = 0; i < 2; ++i)
+      sort(_poOrder[i].begin(), _poOrder[i].end(), [i, funcSupp, poGateCount](size_t idx1, size_t idx2) {
+         if (funcSupp[i][idx1].size() < funcSupp[i][idx2].size()) return true;
+         if (funcSupp[i][idx1].size() > funcSupp[i][idx2].size()) return false;
+         return poGateCount[i][idx1] < poGateCount[i][idx2];
+      });
+   
+   // ========== check ==========
+   cout << "poOrder:\n";
+   for (size_t i = 0; i < 2; ++i) {
+      for (size_t j = 0; j < poList[i].size(); ++j) {
+         cout << "circuit " << i + 1 << ", " << j << "-th PO: ";
+         cout << "funcSuppSize: " << funcSupp[i][j].size() << ", ";
+         cout << "poGateCount: " << poGateCount[i][j] << "\n";
+      }
+      cout << endl;
+   }
+   for (size_t i = 0; i < 2; ++i) {
+      cout << "order of circuit " << i + 1 << ": ";
+      for (size_t j = 0; j < _poOrder[i].size(); ++j) {
+         cout << _poOrder[i][j] << " ";
+      }
+      cout << endl;
+   }
+   // ========== check ==========
 }

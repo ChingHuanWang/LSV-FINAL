@@ -310,6 +310,33 @@ CirPoGate::piToPoGateCount()
    return 1;
 }
 
+size_t
+CirPoGate::poToPiGateCount()
+{
+   return _in0.getGate()->poToPiGateCount();
+}
+
+size_t
+CirGate::poToPiGateCount()
+{
+   if (this->isAig())
+      return getIn0Gate()->poToPiGateCount() + getIn1Gate()->poToPiGateCount();
+   if (this->isPo())
+      return getIn0Gate()->poToPiGateCount();
+}
+
+size_t
+CirAigGate::poToPiGateCount()
+{
+   return _in0.getGate()->poToPiGateCount() + _in1.getGate()->poToPiGateCount();;
+}
+
+size_t 
+CirPiGate::poToPiGateCount()
+{
+   return 1;
+}
+
 
 size_t 
 CirObj::piToPoGateCount()

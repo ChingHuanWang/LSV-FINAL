@@ -28,6 +28,7 @@ class Match {
         bool checkSol() const;
         void printMatch() const;
         bool partialSolvePoMatch(size_t, size_t, bool);
+        void orderPrimary();
 
     private:
         char*                           _outFile;
@@ -40,6 +41,8 @@ class Match {
         int                             _K;
         vector<vector<int>>             _resultMo;
         vector<vector<int>>             _resultMi;
+        vector<vector<size_t>>          _poOrder;
+        vector<vector<size_t>>          _piOrder;
 
 };
 
