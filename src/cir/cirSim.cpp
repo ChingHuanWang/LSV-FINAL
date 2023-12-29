@@ -386,7 +386,7 @@ CirObj::poLongestPath()
    for (CirPoGate* po : _poList) {
       maxLen = po->poLongestPath();
       _poLongestPathList.push_back(maxLen);
-      cout << "po name : " << po->getName() 
-           << ", path len = " << maxLen << endl; 
+      // cout << "po name : " << po->getName() 
+      //      << ", path len = " << maxLen << endl; 
    }
 }
