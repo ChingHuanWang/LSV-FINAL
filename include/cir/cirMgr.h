@@ -116,6 +116,10 @@ public:
    // aig structure parsing
    size_t piToPoGateCount();
    size_t poToPiGateCount();
+   void piLongestPath();
+   void poLongestPath();
+   vector<size_t> getPiLongestPathList() { return _piLongestPathList; }
+   vector<size_t> getPoLongestPathList() { return _poLongestPathList; }
 
 private:
    size_t                    _objIdx;
@@ -140,12 +144,15 @@ private:
    vector<vector<size_t>>                                  _invFuncSupp;
    vector<vector<vector<size_t>>>                          _sym;
 
-   // memeber for grouping input/output
+   // member for grouping input/output
    // first of each vector<size_t>* is the supp size of that group
    // rest of the elements are pi/po idx 
    vector<vector<size_t>*>                                  _inputGrp;
    vector<vector<size_t>*>                                  _outputGrp;
 
+   // member for partial solve po match
+   vector<size_t>                                          _piLongestPathList;
+   vector<size_t>                                          _poLongestPathList;
 };
 
 class CirMgr

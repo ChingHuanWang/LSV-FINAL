@@ -912,7 +912,7 @@ Match::checkSol() const
       else if (g->isPo()) {
          va = g->getVar();
          vb = g->getIn0Gate()->getVar();
-         la = g->isIn0Inv() ? ~Lit(va) : Lit(vb);
+         la = g->isIn0Inv() ? ~Lit(va) : Lit(va);
          lb = Lit(vb);
          lits.push(la); lits.push(~lb);
          checker.addCNF(lits); lits.clear();
@@ -930,7 +930,7 @@ Match::checkSol() const
       else if (g->isPo()) {
          va = g->getVar();
          vb = g->getIn0Gate()->getVar();
-         la = g->isIn0Inv() ? ~Lit(va) : Lit(vb);
+         la = g->isIn0Inv() ? ~Lit(va) : Lit(va);
          lb = Lit(vb);
          lits.push(la); lits.push(~lb);
          checker.addCNF(lits); lits.clear();
@@ -1018,4 +1018,121 @@ Match::checkSol() const
    }
 
    return true;
+}
+
+bool
+Match::partialSolvePoMatch(size_t f, size_t g, bool inv)
+{
+   SatSolver checker;
+   checker.initialize();
+   vector<CirGate*> dfs1 = cirMgr->getCir(1)->getDfsList();
+   vector<CirGate*> dfs2 = cirMgr->getCir(2)->getDfsList();
+   vector<CirPiGate*> pi1 = cirMgr->getCir(1)->getPiList();
+   vector<CirPiGate*> pi2 = cirMgr->getCir(2)->getPiList();
+   vector<CirPoGate*> po1 = cirMgr->getCir(1)->getPoList();
+   vector<CirPoGate*> po2 = cirMgr->getCir(2)->getPoList();
+   
+
+   Var va, vb;
+   Lit la, lb;
+   vec<Lit> lits;
+
+   // init var for cir1, cir 2 and vh
+   for (CirGate* g : dfs1) {
+      g->setVar(checker.newVar());
+   }
+   for (CirGate* g : dfs2) {
+      g->setVar(checker.newVar());
+   }
+
+   // gen aig cnf for cir1 and cir 2
+   // cir 1
+   for (CirGate* g : dfs1) {
+      if (g->isAig()) {
+         checker.addAigCNF(g->getVar(), g->getIn0Gate()->getVar(), g->isIn0Inv(),
+                           g->getIn1Gate()->getVar(), g->isIn1Inv());
+      }
+      else if (g->isPo()) {
+         va = g->getVar();
+         vb = g->getIn0Gate()->getVar();
+         la = g->isIn0Inv() ? ~Lit(va) : Lit(va);
+         lb = Lit(vb);
+         lits.push(la); lits.push(~lb);
+         checker.addCNF(lits); lits.clear();
+         lits.push(~la); lits.push(lb);
+         checker.addCNF(lits); lits.clear();
+      }
+   }
+
+   // cir 2
+   for (CirGate* g : dfs2) {
+      if (g->isAig()) {
+         checker.addAigCNF(g->getVar(), g->getIn0Gate()->getVar(), g->isIn0Inv(),
+                           g->getIn1Gate()->getVar(), g->isIn1Inv());
+      }
+      else if (g->isPo()) {
+         va = g->getVar();
+         vb = g->getIn0Gate()->getVar();
+         la = g->isIn0Inv() ? ~Lit(va) : Lit(va);
+         lb = Lit(vb);
+         lits.push(la); lits.push(~lb);
+         checker.addCNF(lits); lits.clear();
+         lits.push(~la); lits.push(lb);
+         checker.addCNF(lits); lits.clear();
+      }
+   }
+
+   // output match
+   if (!inv) {
+      la = Lit(po2[g]->getVar());
+      lb = Lit(po1[f]->getVar());
+      lits.push(la); lits.push(lb);
+      checker.addCNF(lits); lits.clear();
+      la = ~Lit(po2[g]->getVar());
+      lb = ~Lit(po1[f]->getVar());
+      lits.push(la); lits.push(lb);
+      checker.addCNF(lits); lits.clear();
+   }
+   else {
+      la = Lit(po2[g]->getVar());
+      lb = ~Lit(po1[f]->getVar());
+      lits.push(la); lits.push(lb);
+      checker.addCNF(lits); lits.clear();
+      la = ~Lit(po2[g]->getVar());
+      lb = Lit(po1[f]->getVar());
+      lits.push(la); lits.push(lb);
+      checker.addCNF(lits); lits.clear();
+   }
+
+   return checker.solve();
+}
+
+void 
+Match::printMatch() const 
+{
+   vector<CirPiGate*> pi1 = cirMgr->getCir(1)->getPiList();
+   vector<CirPiGate*> pi2 = cirMgr->getCir(2)->getPiList();
+   vector<CirPoGate*> po1 = cirMgr->getCir(1)->getPoList();
+   vector<CirPoGate*> po2 = cirMgr->getCir(2)->getPoList();
+   // print po match
+   cout << "print po match\n";
+   for (size_t i = 0 ; i < po2.size() ; i++) {
+      for (size_t j = 0 ; j < po1.size() ; j++) {
+         if (_resultMo[i][2*j] || _resultMo[i][2*j+1]) {
+            cout << "(" << po1[j]->getName() << ", " << po2[i]->getName() << ")\n";
+         }
+      }
+   }
+   // print pi match
+   cout << "print pi match\n";
+   for (size_t i = 0 ; i < pi2.size() ; i++) {
+      for (size_t j = 0 ; j < pi1.size() ; j++) {
+         if (_resultMi[i][2*j] || _resultMi[i][2*j+1]) {
+            cout << "(" << pi1[j]->getName() << ", " << pi2[i]->getName() << ")\n";
+         }
+      }
+      if (_resultMi[i][pi1.size()*2] || _resultMi[i][pi1.size()*2+1]) {
+         cout << "(const, " << pi2[i]->getName() << ")\n"; 
+      }
+   }
 }

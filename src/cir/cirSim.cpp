@@ -288,9 +288,7 @@ CirObj::initOutputGrp()
 void
 CirObj::type1Sim()
 {
-   // for (size_t i = 0 ; i < patternLen ; i++) {
-   //    for (auto )
-   // }
+   
 }
 
 
@@ -328,4 +326,67 @@ size_t
 CirObj::poToPiGateCount()
 {
 
+}
+
+size_t 
+CirGate::piLongestPath()
+{
+   size_t maxLen = 0;
+   for (CirGateV v : _foutList) {
+      CirGate* g = v.getGate();
+      size_t tmp = g->piLongestPath();
+      if (maxLen <= tmp) maxLen = tmp;
+   }
+   return maxLen + 1;
+}
+
+size_t 
+CirPoGate::piLongestPath()
+{
+   return 1;
+}
+
+void
+CirObj::piLongestPath()
+{
+   size_t maxLen = 0;
+   for (CirPiGate* pi : _piList) {
+      maxLen = pi->piLongestPath();
+      _piLongestPathList.push_back(maxLen);
+      cout << "pi name : " << pi->getName() 
+           << ", path len = " << maxLen << endl; 
+   }
+}
+
+size_t 
+CirPoGate::poLongestPath()
+{
+   size_t maxLen = getIn0Gate()->poLongestPath();
+   return maxLen+1;
+}
+
+size_t 
+CirAigGate::poLongestPath()
+{
+   size_t leftLen = getIn0Gate()->poLongestPath();
+   size_t rightLen = getIn1Gate()->poLongestPath();
+   return leftLen > rightLen ? leftLen+1 : rightLen+1;
+}
+
+size_t
+CirPiGate::poLongestPath()
+{
+   return 1;
+}
+
+void
+CirObj::poLongestPath()
+{
+   size_t maxLen = 0;
+   for (CirPoGate* po : _poList) {
+      maxLen = po->poLongestPath();
+      _poLongestPathList.push_back(maxLen);
+      cout << "po name : " << po->getName() 
+           << ", path len = " << maxLen << endl; 
+   }
 }

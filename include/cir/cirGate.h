@@ -129,6 +129,8 @@ public:
    void setVar(int v)  { _var = v; }
    int  getVar() const { return _var; }
    virtual size_t piToPoGateCount();
+   virtual size_t piLongestPath();
+   virtual size_t poLongestPath() { return 0; };
 
 private:
    size_t _id;
@@ -168,6 +170,7 @@ public:
 
    // function for boolean matching
    void collectStrucSupp();
+   size_t poLongestPath();
 
 private:
    string  _name;
@@ -206,6 +209,8 @@ public:
    void collectStrucSupp();
    void printStrucSupp() const;
    size_t piToPoGateCount();
+   size_t piLongestPath();
+   size_t poLongestPath();
 
 private:
    CirGateV _in0;
@@ -251,6 +256,7 @@ public:
 
    // function for boolean matching
    void collectStrucSupp();
+   size_t poLongestPath();
 
 private:
    CirGateV _in0;

@@ -26,6 +26,8 @@ class Match {
         void printMatchedMiInvFuncSupp() const;
         void write();
         bool checkSol() const;
+        void printMatch() const;
+        bool partialSolvePoMatch(size_t, size_t, bool);
 
     private:
         char*                           _outFile;

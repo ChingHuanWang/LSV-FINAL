@@ -573,9 +573,9 @@ CirObj::printFuncSupp() const {
    cout << "functional support of cir " << _objIdx << ":\n";
    for (size_t j = 0; j < _funcSupp.size(); ++j) {
       cout << _funcSupp[j].size() << " ";
-      for (size_t k = 0; k < _funcSupp[j].size(); ++k) {
-         cout << _funcSupp[j][k] << " ";
-      }
+      // for (size_t k = 0; k < _funcSupp[j].size(); ++k) {
+      //    cout << _funcSupp[j][k] << " ";
+      // }
       cout << endl;
    }
 }
@@ -709,10 +709,8 @@ void
 CirObj::printStrucSupp() const
 {
    for (CirPoGate* g : _poList) {
-      cout << "********" << endl;
       cout << g->getName() << endl;
       g->printStrucSupp();
-      cout << "********" << endl;
    }
 }
 
@@ -728,9 +726,12 @@ CirObj::collectStrucSupp()
 void 
 CirPoGate::printStrucSupp() const 
 {
-   for (CirGate* g : _strucSupp) {
-      cout << g->getName() << endl;
-   }
+   cout << "size = " << _strucSupp.size() << endl;
+   // for (CirGate* g : _strucSupp) {
+   //    cout << g->getName() << " ";
+   // }
+   // cout << endl;
+   
 }
 
 void 
