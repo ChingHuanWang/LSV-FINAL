@@ -397,33 +397,43 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
    // ==================== output solver constraint ====================
 
    // ===== longest path matching ==============
-   // vector<size_t> long1 = cirMgr->getCir(1)->getPoLongestPathList();
-   // vector<size_t> long2 = cirMgr->getCir(2)->getPoLongestPathList();
-   // vector<CirPoGate*> po1 = cirMgr->getCir(1)->getPoList();
-   // vector<CirPoGate*> po2 = cirMgr->getCir(2)->getPoList();
-   // vector<bool> match(poNum[0], 0);
-   // // if len = 0, po is connected to const 
-   // // else if len = 1, po is directly connected to pi -> can arbitrary match such pair 
-   // for (size_t i = 0 ; i < poNum[1] ; i++) {
-   //    for (size_t j = 0 ; j < poNum[0] ; j++) {
-   //       if ((long2[i] == 1 && long1[j] == 1) || (long2[i] == 2 && long1[j] == 2)) {
-   //          if (!match[j]) {
-   //             // sol 1
-   //             // lf = po2[i]->getIn0Gate()->isIn0Inv() == po1[j]->getIn0Gate()->isIn0Inv() ? Lit(Mo[i][j*2]) : Lit(Mo[i][j*2+1]);
-   //             // lits.push(lf);
-   //             // _outputSolver.addCNF(lits); lits.clear();
-
-   //             // sol 2
-   //             la = Lit(Mo[i][j*2]); lb = Lit(Mo[i][j*2+1]);
-   //             lits.push(la); lits.push(lb);
-   //             _outputSolver.addCNF(lits); lits.clear();
-   //             lits.push(~la); lits.push(~lb);
-   //             _outputSolver.addCNF(lits); lits.clear();
-   //             match[j] = true; break;
-   //          }
-   //       }
-   //    }
-   // }
+   vector<size_t> long1 = cirMgr->getCir(1)->getPoLongestPathList();
+   vector<size_t> long2 = cirMgr->getCir(2)->getPoLongestPathList();
+   vector<CirPoGate*> po1 = cirMgr->getCir(1)->getPoList();
+   vector<CirPoGate*> po2 = cirMgr->getCir(2)->getPoList();
+   vector<CirPiGate*> pi1 = cirMgr->getCir(1)->getPiList();
+   vector<CirPiGate*> pi2 = cirMgr->getCir(2)->getPiList();
+   vector<bool> match(poNum[0], 0);
+   // if len = 0, po is connected to const 
+   // else if len = 1, po is directly connected to pi -> can arbitrary match such pair 
+   for (size_t i = 0 ; i < poNum[1] ; i++) {
+      for (size_t j = 0 ; j < poNum[0] ; j++) {
+         if (long2[i] <= 2 && long1[j] <= 2) {
+            CirGate* g1 = po1[_poOrder[0][j]]->getIn0Gate();
+            CirGate* g2 = po2[_poOrder[1][i]]->getIn0Gate();
+            size_t idx1, idx2;
+            for (size_t k = 0 ; k < pi1.size() ; k++) {
+               if (pi1[k]->getId() == g1->getId()) {
+                  idx1 = k; break;
+               }
+            }
+            for (size_t k = 0 ; k < pi2.size() ; k++) {
+               if (pi2[k]->getId() == g2->getId()) {
+                  idx2 = k; break;
+               }
+            }
+            // cij + dij = 0 -> ~cij~dij
+            if (invFuncSupp[0][idx1].size() > invFuncSupp[1][idx2].size()) {
+               lf = ~Lit(Mo[i][j*2]); lits.push(lf);
+               cout << "add " << Mo[i][j * 2] << endl;
+               getchar();
+               _outputSolver.addCNF(lits); lits.clear();
+               lf = ~Lit(Mo[i][j*2+1]); lits.push(lf);
+               _outputSolver.addCNF(lits); lits.clear();
+            }
+         }
+      }
+   }
    // ===== longest path matching ==============
 
 }
@@ -834,6 +844,10 @@ void Match::write() {
    cout << "optimal = " << _optimal << endl;
    cout << "final mapping result:" << endl;
    cout << "output:" << endl;
+   cout << "po size = " << (_resultMo[0].size()-2) / 2 << " " << _resultMo.size() << endl;
+   cout << "pi size = " << (_resultMi[0].size()-2) / 2 << " " << _resultMi.size() << endl;
+
+   // return;
    for (size_t j = 0; j < _resultMo.size(); ++j) {
       for (size_t i = 0; i < _resultMo[j].size(); ++i) {
          cout << _resultMo[j][i] << " ";
@@ -1152,22 +1166,22 @@ Match::orderPrimary() {
       });
    
    // ========== check ==========
-   cout << "piOrder:\n";
-   for (size_t i = 0; i < 2; ++i) {
-      for (size_t j = 0; j < piList[i].size(); ++j) {
-         cout << "circuit " << i + 1 << ", " << j << "-th PI: ";
-         cout << "funcSuppSize: " << invFuncSupp[i][j].size() << ", ";
-         cout << "gateCount: " << piGateCount[i][j] << "\n";
-      }
-      cout << endl;
-   }
-   for (size_t i = 0; i < 2; ++i) {
-      cout << "order of circuit " << i + 1 << ": ";
-      for (size_t j = 0; j < _piOrder[i].size(); ++j) {
-         cout << _piOrder[i][j] << " ";
-      }
-      cout << endl;
-   }
+   // cout << "piOrder:\n";
+   // for (size_t i = 0; i < 2; ++i) {
+   //    for (size_t j = 0; j < piList[i].size(); ++j) {
+   //       cout << "circuit " << i + 1 << ", " << j << "-th PI: ";
+   //       cout << "funcSuppSize: " << invFuncSupp[i][j].size() << ", ";
+   //       cout << "gateCount: " << piGateCount[i][j] << "\n";
+   //    }
+   //    cout << endl;
+   // }
+   // for (size_t i = 0; i < 2; ++i) {
+   //    cout << "order of circuit " << i + 1 << ": ";
+   //    for (size_t j = 0; j < _piOrder[i].size(); ++j) {
+   //       cout << _piOrder[i][j] << " ";
+   //    }
+   //    cout << endl;
+   // }
    // getchar();
    // ========== check ==========
 
@@ -1192,21 +1206,21 @@ Match::orderPrimary() {
       });
    
    // ========== check ==========
-   cout << "poOrder:\n";
-   for (size_t i = 0; i < 2; ++i) {
-      for (size_t j = 0; j < poList[i].size(); ++j) {
-         cout << "circuit " << i + 1 << ", " << j << "-th PO: ";
-         cout << "funcSuppSize: " << funcSupp[i][j].size() << ", ";
-         cout << "poGateCount: " << poGateCount[i][j] << "\n";
-      }
-      cout << endl;
-   }
-   for (size_t i = 0; i < 2; ++i) {
-      cout << "order of circuit " << i + 1 << ": ";
-      for (size_t j = 0; j < _poOrder[i].size(); ++j) {
-         cout << _poOrder[i][j] << " ";
-      }
-      cout << endl;
-   }
+   // cout << "poOrder:\n";
+   // for (size_t i = 0; i < 2; ++i) {
+   //    for (size_t j = 0; j < poList[i].size(); ++j) {
+   //       cout << "circuit " << i + 1 << ", " << j << "-th PO: ";
+   //       cout << "funcSuppSize: " << funcSupp[i][j].size() << ", ";
+   //       cout << "poGateCount: " << poGateCount[i][j] << "\n";
+   //    }
+   //    cout << endl;
+   // }
+   // for (size_t i = 0; i < 2; ++i) {
+   //    cout << "order of circuit " << i + 1 << ": ";
+   //    for (size_t j = 0; j < _poOrder[i].size(); ++j) {
+   //       cout << _poOrder[i][j] << " ";
+   //    }
+   //    cout << endl;
+   // }
    // ========== check ==========
 }

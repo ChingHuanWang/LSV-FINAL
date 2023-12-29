@@ -6,19 +6,75 @@
 #include "cirMgr.h"
 #include "match.h"
 #include <ctime>
+#include <chrono>
 #include <iomanip>
 
 using namespace std;
+using namespace std::chrono;
 
 int main(int argc, char** argv)
 {
     Match *match = new Match;
     vector<string> cirFileList;
-    time_t start, end;
 
     match->parseInput(argv[1], cirFileList);
     cirMgr->readCircuit(cirFileList[0], cirFileList[1]);
     match->parseBus();
+    
+    
+
+    cirMgr->getCir(1)->collectStrucSupp();
+    cirMgr->getCir(2)->collectStrucSupp();
+    cirMgr->getCir(1)->collectFuncSupp();
+    cirMgr->getCir(2)->collectFuncSupp();
+    cirMgr->getCir(1)->collectInvFuncSupp();
+    cirMgr->getCir(2)->collectInvFuncSupp();
+    cirMgr->getCir(1)->piLongestPath();
+    cirMgr->getCir(2)->piLongestPath();
+    // cirMgr->getCir(1)->poLongestPath();
+    // cirMgr->getCir(2)->poLongestPath();
+
+    vector<size_t> long1 = cirMgr->getCir(1)->getPiLongestPathList();
+    vector<size_t> long2 = cirMgr->getCir(2)->getPiLongestPathList();
+
+    vector<vector<size_t>> inv1 = cirMgr->getCir(1)->getInvFuncSupp();
+    vector<vector<size_t>> inv2 = cirMgr->getCir(2)->getInvFuncSupp();
+    vector<size_t> inv1sum(cirMgr->getCir(1)->getPoNum(), 0);
+    vector<size_t> inv2sum(cirMgr->getCir(2)->getPoNum(), 0);
+
+    // ===== count invFuncSuppSize ===== 
+    // for (size_t i = 0 ; i < inv1.size() ; i++)
+    //     inv1sum[inv1[i].size()-1]++;
+
+    // for (size_t i = 0 ; i < inv2.size() ; i++)
+    //     inv2sum[inv2[i].size()-1]++;
+
+    // for (size_t i = 0 ; i < inv1sum.size() ; i++)
+    //     cout << i+1 << " : " << inv1sum[i] << " " << inv2sum[i] << endl;
+    // ===== count invFuncSuppSize ===== 
+
+    // for (size_t i = 0 ; i < long1.size() ; i++) {
+    //     cout << "max len = " << long1[i] << ", invsupp num = " << inv1[i].size() << endl;
+    // }
+
+    // for (size_t i = 0 ; i < long2.size() ; i++) {
+    //     cout << "max len = " << long2[i] << ", invsupp num = " << inv2[i].size() << endl;
+    // }
+
+    // vector<size_t> long1 = cirMgr->getCir(1)->getPoLongestPathList();
+    // vector<size_t> long2 = cirMgr->getCir(2)->getPoLongestPathList();
+    // vector<vector<CirGate*>> func1 = cirMgr->getCir(1)->getStrucSupp();
+    // vector<vector<CirGate*>> func2 = cirMgr->getCir(2)->getStrucSupp();
+
+    // for (size_t i = 0 ; i < long1.size() ; i++) {
+    //     cout << "path len = " << long1[i] << ", " << "func supp num = " << func1[i].size() << endl;
+    //     if (func1[i].size() == 1) cout << "fanout num = " << func1[i][0]->numFout() << endl;
+    // }
+
+    // for (size_t i = 0 ; i < long2.size() ; i++) {
+    //     cout << "path len = " << long2[i] << ", " << "func supp num = " << func2[i].size() << endl;
+    //     if (func2[i].size() == 1) cout << "fanout num = " << func2[i][0]->numFout() << endl;;
+    // }
     
     // cirMgr->getCir(1)->printStrucSupp();
     // cirMgr->getCir(2)->printStrucSupp();
@@ -29,10 +85,10 @@ int main(int argc, char** argv)
     // cirMgr->getCir(2)->collectInvFuncSupp();
 
     
-    start = time(NULL);
+    auto start = high_resolution_clock::now();
     match->solve();
-    end = time(NULL);
-    double diff = difftime(end, start);
-    cout << "solve time: " << setprecision(6) << fixed << diff << "s" << endl;
-    match->printMatch();
+    auto end = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(end - start);
+    cout << "solve time: " << setprecision(6) << duration.count() / 1e6 << "ms" << endl;
+    // match->printMatch();
 }

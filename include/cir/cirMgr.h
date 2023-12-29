@@ -92,6 +92,7 @@ public:
    vector<CirGate*>    getDfsList() const { return _dfsList; }
    vector<vector<size_t>> getFuncSupp() const { return _funcSupp; }
    vector<vector<size_t>> getInvFuncSupp() const { return _invFuncSupp; }
+   vector<vector<CirGate*>> getStrucSupp() const { return _strucSupp; }
    void getRedundant(vector<size_t>&, vector<size_t>&, vector<vector<bool>>&);
    void collectStrucSupp();
    void collectFuncSupp();
@@ -149,6 +150,7 @@ private:
    vector<vector<vector<size_t>>>                          _sym;
    vector<size_t>                                          _piGateCount;
    vector<size_t>                                          _poGateCount;
+   vector<vector<CirGate*>>                                _strucSupp;
 
    // member for grouping input/output
    // first of each vector<size_t>* is the supp size of that group

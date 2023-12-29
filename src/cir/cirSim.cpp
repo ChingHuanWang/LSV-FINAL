@@ -380,8 +380,8 @@ CirObj::piLongestPath()
    for (CirPiGate* pi : _piList) {
       maxLen = pi->piLongestPath();
       _piLongestPathList.push_back(maxLen);
-      cout << "pi name : " << pi->getName() 
-           << ", path len = " << maxLen << endl; 
+      // cout << "pi name : " << pi->getName() 
+      //      << ", path len = " << maxLen << endl; 
    }
 }
 
