@@ -717,9 +717,11 @@ CirObj::printStrucSupp() const
 void
 CirObj::collectStrucSupp()
 {
+   
    CirGate::incrementGlobalRef();
    for (CirPoGate* g : _poList) {
       g->collectStrucSupp();
+      _strucSupp.push_back(vector<CirGate*>(g->suppBegin(), g->suppEnd()));
    }
 }
 

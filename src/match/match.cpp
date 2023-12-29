@@ -368,7 +368,7 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
    for (size_t i = 0 ; i < piNum[0] ; i++) {
       for (size_t j = 0 ; j < piNum[1] ; j++) {
          // ~cij~dij
-         if (invFuncSupp[0][i].size() != invFuncSupp[1][j].size()) {
+         if (invFuncSupp[0][i].size() > invFuncSupp[1][j].size()) {
             vf = Mi[j][i*2]; lf = ~Lit(vf); lits.push(lf);
             _outputSolver.addCNF(lits); lits.clear();
             vf = Mi[j][i*2+1]; lf = ~Lit(vf); lits.push(lf);
@@ -385,25 +385,33 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
    vector<size_t> long2 = cirMgr->getCir(2)->getPoLongestPathList();
    vector<CirPoGate*> po1 = cirMgr->getCir(1)->getPoList();
    vector<CirPoGate*> po2 = cirMgr->getCir(2)->getPoList();
+   vector<CirPiGate*> pi1 = cirMgr->getCir(1)->getPiList();
+   vector<CirPiGate*> pi2 = cirMgr->getCir(2)->getPiList();
    vector<bool> match(poNum[0], 0);
    // if len = 0, po is connected to const 
    // else if len = 1, po is directly connected to pi -> can arbitrary match such pair 
    for (size_t i = 0 ; i < poNum[1] ; i++) {
       for (size_t j = 0 ; j < poNum[0] ; j++) {
-         if ((long2[i] == 1 && long1[j] == 1) || (long2[i] == 2 && long1[j] == 2)) {
-            if (!match[j]) {
-               // sol 1
-               // lf = po2[i]->getIn0Gate()->isIn0Inv() == po1[j]->getIn0Gate()->isIn0Inv() ? Lit(Mo[i][j*2]) : Lit(Mo[i][j*2+1]);
-               // lits.push(lf);
-               // _outputSolver.addCNF(lits); lits.clear();
-
-               // sol 2
-               la = Lit(Mo[i][j*2]); lb = Lit(Mo[i][j*2+1]);
-               lits.push(la); lits.push(lb);
+         if (long2[i] <= 2 && long1[j] <= 2) {
+            CirGate* g1 = po1[j]->getIn0Gate();
+            CirGate* g2 = po2[i]->getIn0Gate();
+            size_t idx1, idx2;
+            for (size_t k = 0 ; k < pi1.size() ; k++) {
+               if (pi1[k]->getId() == g1->getId()) {
+                  idx1 = k; break;
+               }
+            }
+            for (size_t k = 0 ; k < pi2.size() ; k++) {
+               if (pi2[k]->getId() == g2->getId()) {
+                  idx2 = k; break;
+               }
+            }
+            // cij + dij = 0 -> ~cij~dij
+            if (invFuncSupp[0][idx1].size() != invFuncSupp[1][idx2].size()) {
+               lf = ~Lit(Mo[i][j*2]); lits.push(lf);
                _outputSolver.addCNF(lits); lits.clear();
-               lits.push(~la); lits.push(~lb);
+               lf = ~Lit(Mo[i][j*2+1]); lits.push(lf);
                _outputSolver.addCNF(lits); lits.clear();
-               match[j] = true; break;
             }
          }
       }
@@ -555,7 +563,7 @@ void Match::solve() {
 
    // ================== solve ==================
    int optimal = 0, score;
-   bool proj = false;
+   bool proj = true;
    char inputcheck;
    vector<size_t> counterExampleIn, counterExampleOut;
    vector<vector<bool>> red1, red2;
@@ -787,6 +795,10 @@ void Match::write() {
    cout << "optimal = " << _optimal << endl;
    cout << "final mapping result:" << endl;
    cout << "output:" << endl;
+   cout << "po size = " << (_resultMo[0].size()-2) / 2 << " " << _resultMo.size() << endl;
+   cout << "pi size = " << (_resultMi[0].size()-2) / 2 << " " << _resultMi.size() << endl;
+
+   return;
    for (size_t j = 0; j < _resultMo.size(); ++j) {
       for (size_t i = 0; i < _resultMo[j].size(); ++i) {
          cout << _resultMo[j][i] << " ";
