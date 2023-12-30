@@ -177,8 +177,6 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
 
    vector<vector<CirPiGate*>> piList = {cirMgr->getCir(1)->getPiList(), cirMgr->getCir(2)->getPiList()};
    vector<vector<CirPoGate*>> poList = {cirMgr->getCir(1)->getPoList(), cirMgr->getCir(2)->getPoList()};
-   vector<vector<bool>> funcSupp1(poNum[0], vector<bool>(piNum[0], false));
-   vector<vector<bool>> funcSupp2(poNum[1], vector<bool>(piNum[1], false));
    vector<vector<int>> funcSuppSize(2, vector<int>(poNum[0], 0));
    int count;
 
@@ -399,26 +397,20 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
    // ===== longest path matching ==============
    vector<size_t> long1 = cirMgr->getCir(1)->getPoLongestPathList();
    vector<size_t> long2 = cirMgr->getCir(2)->getPoLongestPathList();
-   vector<CirPoGate*> po1 = cirMgr->getCir(1)->getPoList();
-   vector<CirPoGate*> po2 = cirMgr->getCir(2)->getPoList();
-   vector<CirPiGate*> pi1 = cirMgr->getCir(1)->getPiList();
-   vector<CirPiGate*> pi2 = cirMgr->getCir(2)->getPiList();
    vector<bool> match(poNum[0], 0);
    // if po to pi len <= 2 -> po's pi is only one -> check whether pi's invsupp num is same
    // if not same, means the two pos can not be matched 
    for (size_t i = 0 ; i < poNum[1] ; i++) {
       for (size_t j = 0 ; j < poNum[0] ; j++) {
          if (long2[i] <= 2 && long1[j] <= 2) {
-            CirGate* g1 = po1[_poOrder[0][j]]->getIn0Gate();
-            CirGate* g2 = po2[_poOrder[1][i]]->getIn0Gate();
             size_t idx1, idx2;
-            for (size_t k = 0 ; k < pi1.size() ; k++) {
-               if (pi1[k]->getId() == g1->getId()) {
+            for (size_t k = 0 ; k < piList[0].size() ; k++) {
+               if (piList[0][k]->getId() == poList[0][_poOrder[0][j]]->getIn0Gate()->getId()) {
                   idx1 = k; break;
                }
             }
-            for (size_t k = 0 ; k < pi2.size() ; k++) {
-               if (pi2[k]->getId() == g2->getId()) {
+            for (size_t k = 0 ; k < piList[1].size() ; k++) {
+               if (piList[1][k]->getId() == poList[1][_poOrder[1][i]]->getIn0Gate()->getId()) {
                   idx2 = k; break;
                }
             }
@@ -437,79 +429,83 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
    // ===== longest path matching ==============
 
    // ===== match by invfunc supp num =====
-   size_t cir1InvSum = 0, cir2InvSum = 0;
-   vector<size_t> inv1sum(piNum[0]+1, 0);
-   vector<size_t> inv2sum(piNum[1]+1, 0);
-   vector<bool>   matchInvSuppNum(piNum[0]+1, false);
-   for (size_t i = 0 ; i < piNum[0] ; i++) {
-      inv1sum[invFuncSupp[0][i].size()]++;
-   }
-   for (size_t i = 0 ; i < piNum[1] ; i++) {
-      inv2sum[invFuncSupp[1][i].size()]++;
-   }
-   for (size_t i = 0 ; i <= piNum[0] ; i++) {
-      cir1InvSum += inv1sum[i];
-      cir2InvSum += inv2sum[i];
-      if (cir1InvSum <= cir2InvSum && inv1sum[i]==1 && inv2sum[i]==1) {
-         matchInvSuppNum[i] = true;
+   if (piList[0].size() == piList[1].size()) {
+      size_t cir1InvSum = 0, cir2InvSum = 0;
+      vector<size_t> inv1sum(poNum[0]+1, 0);
+      vector<size_t> inv2sum(poNum[1]+1, 0);
+      vector<bool>   matchInvSuppNum(poNum[0]+1, false);
+      for (size_t i = 0 ; i < piNum[0] ; i++) {
+         inv1sum[invFuncSupp[0][i].size()]++;
       }
-   }
+      for (size_t i = 0 ; i < piNum[1] ; i++) {
+         inv2sum[invFuncSupp[1][i].size()]++;
+      }
+      for (size_t i = 0 ; i <= poNum[0] ; i++) {
+         cir1InvSum += inv1sum[i];
+         cir2InvSum += inv2sum[i];
+         if (cir1InvSum <= cir2InvSum && inv1sum[i]==1 && inv2sum[i]==1) {
+            matchInvSuppNum[i] = true;
+         }
+      }
 
-   // check code correct
-   // for (size_t i = 0 ; i <= inv1sum.size() ; i++) {
-   //       cout << i+1 << " : " << inv1sum[i] << " " << inv2sum[i] << " match = " << matchInvSuppNum[i] << endl;
-   // }
-   for (size_t i = 0 ; i < pi1.size() ; i++) {
-      for (size_t j = 0 ; j < pi2.size() ; j++) {
-         if (invFuncSupp[0][i].size() == invFuncSupp[1][j].size() 
-            && inv1sum[invFuncSupp[0][i].size()] == 1
-            && inv2sum[invFuncSupp[1][j].size()] == 1
-            && matchInvSuppNum[invFuncSupp[0][i].size()]) {
-               la = Lit(Mi[j][i*2]); lb = Lit(Mi[j][i*2+1]);
-               lits.push(la); lits.push(lb);
-               _outputSolver.addCNF(lits); lits.clear();
-               lits.push(~la); lits.push(~lb);
-               _outputSolver.addCNF(lits); lits.clear();
+      // check code correct
+      // for (size_t i = 0 ; i <= inv1sum.size() ; i++) {
+      //       cout << i+1 << " : " << inv1sum[i] << " " << inv2sum[i] << " match = " << matchInvSuppNum[i] << endl;
+      // }
+      for (size_t i = 0 ; i < piList[0].size() ; i++) {
+         for (size_t j = 0 ; j < piList[1].size() ; j++) {
+            if (invFuncSupp[0][_piOrder[0][i]].size() == invFuncSupp[1][_piOrder[1][j]].size() 
+               && inv1sum[invFuncSupp[0][_piOrder[0][i]].size()] == 1
+               && inv2sum[invFuncSupp[1][_piOrder[1][j]].size()] == 1
+               && matchInvSuppNum[invFuncSupp[0][_piOrder[0][i]].size()]) {
+                  la = Lit(Mi[j][i*2]); lb = Lit(Mi[j][i*2+1]);
+                  lits.push(la); lits.push(lb);
+                  _outputSolver.addCNF(lits); lits.clear();
+                  lits.push(~la); lits.push(~lb);
+                  _outputSolver.addCNF(lits); lits.clear();
+            }
          }
       }
    }
    // ===== match by invfunc supp num =====
-   
-   // ===== match by func supp num ========
-   size_t cir1FuncSum = 0, cir2FuncSum = 0;
-   vector<size_t> func1sum(poNum[0]+1, 0);
-   vector<size_t> func2sum(poNum[1]+1, 0);
-   vector<bool>   matchFuncSuppNum(poNum[0]+1, false);
 
-   for (size_t i = 0 ; i < poNum[0] ; i++) {
-      func1sum[funcSupp[0][i].size()]++;
-   }
-   for (size_t i = 0 ; i < poNum[1] ; i++) {
-      func2sum[funcSupp[1][i].size()]++;
-   }
-   for (size_t i = 0 ; i <= piNum[0] ; i++) {
-      cir1FuncSum += func1sum[i];
-      cir2FuncSum += func2sum[i];
-      if (cir1FuncSum <= cir2FuncSum && func1sum[i]==1 && func2sum[i]==1) {
-         matchFuncSuppNum[i] = true;
+   if (poList[0].size() == poList[1].size()) {
+   
+      // ===== match by func supp num ========
+      size_t cir1FuncSum = 0, cir2FuncSum = 0;
+      vector<size_t> func1sum(piNum[0]+1, 0);
+      vector<size_t> func2sum(piNum[1]+1, 0);
+      vector<bool>   matchFuncSuppNum(piNum[0]+1, false);
+
+      for (size_t i = 0 ; i < poNum[0] ; i++) {
+         func1sum[funcSupp[0][i].size()]++;
       }
-   }
-   for (size_t i = 0 ; i < po1.size() ; i++) {
-      for (size_t j = 0 ; j < po2.size() ; j++) {
-         if (funcSupp[0][i].size() == funcSupp[1][j].size() 
-            && func1sum[funcSupp[0][i].size()] == 1
-            && func2sum[funcSupp[1][j].size()] == 1
-            && matchFuncSuppNum[funcSupp[0][i].size()]) {
-               la = Lit(Mo[j][i*2]); lb = Lit(Mo[j][i*2+1]);
-               lits.push(la); lits.push(lb);
-               _outputSolver.addCNF(lits); lits.clear();
-               lits.push(~la); lits.push(~lb);
-               _outputSolver.addCNF(lits); lits.clear();
+      for (size_t i = 0 ; i < poNum[1] ; i++) {
+         func2sum[funcSupp[1][i].size()]++;
+      }
+      for (size_t i = 0 ; i <= piNum[0] ; i++) {
+         cir1FuncSum += func1sum[i];
+         cir2FuncSum += func2sum[i];
+         if (cir1FuncSum <= cir2FuncSum && func1sum[i]==1 && func2sum[i]==1) {
+            matchFuncSuppNum[i] = true;
          }
       }
-   }
-   // ===== match by func supp num ========
-
+      for (size_t i = 0 ; i < poList[0].size() ; i++) {
+         for (size_t j = 0 ; j < poList[1].size() ; j++) {
+            if (funcSupp[0][_poOrder[0][i]].size() == funcSupp[1][_poOrder[1][j]].size() 
+               && func1sum[funcSupp[0][_poOrder[0][i]].size()] == 1
+               && func2sum[funcSupp[1][_poOrder[1][j]].size()] == 1
+               && matchFuncSuppNum[funcSupp[0][_poOrder[0][i]].size()]) {
+                  la = Lit(Mo[j][i*2]); lb = Lit(Mo[j][i*2+1]);
+                  lits.push(la); lits.push(lb);
+                  _outputSolver.addCNF(lits); lits.clear();
+                  lits.push(~la); lits.push(~lb);
+                  _outputSolver.addCNF(lits); lits.clear();
+            }
+         }
+      }
+      // ===== match by func supp num ========
+   }   
 
 }
 
