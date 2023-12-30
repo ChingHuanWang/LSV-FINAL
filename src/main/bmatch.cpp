@@ -23,24 +23,24 @@ int main(int argc, char** argv)
     
     
 
-    cirMgr->getCir(1)->collectStrucSupp();
-    cirMgr->getCir(2)->collectStrucSupp();
-    cirMgr->getCir(1)->collectFuncSupp();
-    cirMgr->getCir(2)->collectFuncSupp();
-    cirMgr->getCir(1)->collectInvFuncSupp();
-    cirMgr->getCir(2)->collectInvFuncSupp();
-    cirMgr->getCir(1)->piLongestPath();
-    cirMgr->getCir(2)->piLongestPath();
+    // cirMgr->getCir(1)->collectStrucSupp();
+    // cirMgr->getCir(2)->collectStrucSupp();
+    // cirMgr->getCir(1)->collectFuncSupp();
+    // cirMgr->getCir(2)->collectFuncSupp();
+    // cirMgr->getCir(1)->collectInvFuncSupp();
+    // cirMgr->getCir(2)->collectInvFuncSupp();
+    // cirMgr->getCir(1)->piLongestPath();
+    // cirMgr->getCir(2)->piLongestPath();
     // cirMgr->getCir(1)->poLongestPath();
     // cirMgr->getCir(2)->poLongestPath();
 
-    vector<size_t> long1 = cirMgr->getCir(1)->getPiLongestPathList();
-    vector<size_t> long2 = cirMgr->getCir(2)->getPiLongestPathList();
+    // vector<size_t> long1 = cirMgr->getCir(1)->getPiLongestPathList();
+    // vector<size_t> long2 = cirMgr->getCir(2)->getPiLongestPathList();
 
-    vector<vector<size_t>> inv1 = cirMgr->getCir(1)->getInvFuncSupp();
-    vector<vector<size_t>> inv2 = cirMgr->getCir(2)->getInvFuncSupp();
-    vector<size_t> inv1sum(cirMgr->getCir(1)->getPoNum(), 0);
-    vector<size_t> inv2sum(cirMgr->getCir(2)->getPoNum(), 0);
+    // vector<vector<size_t>> inv1 = cirMgr->getCir(1)->getInvFuncSupp();
+    // vector<vector<size_t>> inv2 = cirMgr->getCir(2)->getInvFuncSupp();
+    // vector<size_t> inv1sum(cirMgr->getCir(1)->getPoNum(), 0);
+    // vector<size_t> inv2sum(cirMgr->getCir(2)->getPoNum(), 0);
 
     // ===== count invFuncSuppSize ===== 
     // for (size_t i = 0 ; i < inv1.size() ; i++)
@@ -89,6 +89,6 @@ int main(int argc, char** argv)
     match->solve();
     auto end = high_resolution_clock::now();
     auto duration = duration_cast<microseconds>(end - start);
-    cout << "solve time: " << setprecision(6) << duration.count() / 1e6 << "ms" << endl;
+    cout << "solve time: " << setprecision(6) << duration.count() / 1e6 << "s" << endl;
     // match->printMatch();
 }
