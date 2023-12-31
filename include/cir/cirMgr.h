@@ -42,6 +42,7 @@ public:
 
    // Member functions about circuit construction
    bool readCircuit(const string&);
+   bool readBus(vector<vector<string>>&);
 
    // Member functions about circuit optimization
    void sweep();
@@ -83,23 +84,26 @@ public:
    size_t checkGate(size_t);
 
    // functions for boolean matching
-   size_t getPoNum() const { return _poList.size(); }
    size_t getPiNum() const { return _piList.size(); }
-   size_t getGateNum() const { return _piList.size() + _aigList.size() + _poList.size(); }
+   size_t getAigNum() const { return _aigList.size(); }
+   size_t getPoNum() const { return _poList.size(); }
+   size_t getPiBusNum() const { return _piBus.size(); }
+   size_t getPoBusNum() const { return _poBus.size(); }
    vector<CirPiGate*> getPiList() const { return _piList; }
-   vector<CirPoGate*> getPoList() const { return _poList; }
    vector<CirAigGate*> getAigList() const { return _aigList; }
-   vector<CirGate*>    getDfsList() const { return _dfsList; }
-   vector<vector<size_t>> getFuncSupp() const { return _funcSupp; }
-   vector<vector<size_t>> getInvFuncSupp() const { return _invFuncSupp; }
+   vector<CirPoGate*> getPoList() const { return _poList; }
+   vector<vector<size_t>> getPiBus() const { return _piBus; }
+   vector<vector<size_t>> getPoBus() const { return _poBus; }
+   vector<vector<size_t>> getPoFuncSupp() const { return _poFuncSupp; }
+   vector<vector<size_t>> getPiFuncSupp() const { return _piFuncSupp; }
    vector<vector<CirGate*>> getStrucSupp() const { return _strucSupp; }
    void getRedundant(vector<size_t>&, vector<size_t>&, vector<vector<bool>>&);
    void collectStrucSupp();
-   void collectFuncSupp();
-   void collectInvFuncSupp();
+   void collectPoFuncSupp();
+   void collectPiFuncSupp();
    void printStrucSupp() const;
-   void printFuncSupp() const;
-   void printInvFuncSupp() const;
+   void printPoFuncSupp() const;
+   void printPiFuncSupp() const;
 
    // functions for constructing unate table and symmetry table
    void collectUnate();
@@ -115,8 +119,6 @@ public:
    void type3Sim();
 
    // aig structure parsing
-   size_t piToPoGateCount();
-   size_t poToPiGateCount();
    void collectPiGateCount();
    void collectPoGateCount();
    void piLongestPath();
@@ -125,6 +127,12 @@ public:
    vector<size_t> getPoLongestPathList() { return _poLongestPathList; }
    vector<size_t> getPiGateCount() { return _piGateCount; }
    vector<size_t> getPoGateCount() { return _poGateCount; }
+
+   // reordering
+   void collectPoOrder();
+   void collectPiOrder();
+   void reorderPoBus();
+   void reorderPiBus();
 
 private:
    size_t                    _objIdx;
@@ -145,12 +153,12 @@ private:
    SatSolver                                               _sat;
    vector<vector<size_t>>                                  _posUnateTable;
    vector<vector<size_t>>                                  _negUnateTable;
-   vector<vector<size_t>>                                  _funcSupp;
-   vector<vector<size_t>>                                  _invFuncSupp;
    vector<vector<vector<size_t>>>                          _sym;
    vector<size_t>                                          _piGateCount;
    vector<size_t>                                          _poGateCount;
    vector<vector<CirGate*>>                                _strucSupp;
+   vector<vector<size_t>>                                  _poFuncSupp;
+   vector<vector<size_t>>                                  _piFuncSupp;
 
    // member for grouping input/output
    // first of each vector<size_t>* is the supp size of that group
@@ -161,6 +169,14 @@ private:
    // member for partial solve po match
    vector<size_t>                                          _piLongestPathList;
    vector<size_t>                                          _poLongestPathList;
+
+   // bus information
+   vector<vector<size_t>>                                  _piBus;
+   vector<vector<size_t>>                                  _poBus;
+
+   // ordering
+   vector<size_t>                                          _poOrder;
+   vector<size_t>                                          _piOrder;
 };
 
 class CirMgr
@@ -181,7 +197,7 @@ public:
    void deleCircuit();
 
    // Member functions about circuit construction
-   bool readCircuit(const string&, const string&);
+   bool readCircuit(const string&, const string&, const string&);
    void recycle(CirGate* g) { _recycleList.push_back(g); }
    CirObj* getCir(size_t idx) const { return _objList[idx-1]; }
    CirConstGate* getConst0() const { return _const; }

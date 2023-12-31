@@ -227,14 +227,14 @@ CirObj::initInputGrp()
    for (size_t piIdx = 0 ; piIdx < _piList.size() ; piIdx++) {      
       bool isInsert = false;
       for (vector<size_t>* itr : _inputGrp) {
-         if (_invFuncSupp[piIdx].size() == (*itr)[0]) {
+         if (_piFuncSupp[piIdx].size() == (*itr)[0]) {
             itr->push_back(piIdx); isInsert = true;
             break;
          }
       }
       if (!isInsert) {
          vector<size_t>* tmp = new vector<size_t>;
-         tmp->push_back(_invFuncSupp[piIdx].size()); tmp->push_back(piIdx); 
+         tmp->push_back(_piFuncSupp[piIdx].size()); tmp->push_back(piIdx); 
          _inputGrp.push_back(tmp);
       }
    }
@@ -247,7 +247,7 @@ CirObj::initInputGrp()
    for (vector<size_t>* itr : _inputGrp) {
       for (size_t i = 0 ; i < (*itr).size() ; i++) {
          if (i == 0) continue;
-         cout << _invFuncSupp[(*itr)[i]].size() << " ";
+         cout << _piFuncSupp[(*itr)[i]].size() << " ";
       }
       cout << endl;
    }
@@ -259,14 +259,14 @@ CirObj::initOutputGrp()
    for (size_t poIdx = 0 ; poIdx < _poList.size() ; poIdx++) {      
       bool isInsert = false;
       for (vector<size_t>* itr : _outputGrp) {
-         if (_funcSupp[poIdx].size() == (*itr)[0]) {
+         if (_poFuncSupp[poIdx].size() == (*itr)[0]) {
             itr->push_back(poIdx); isInsert = true;
             break;
          }
       }
       if (!isInsert) {
          vector<size_t>* tmp = new vector<size_t>;
-         tmp->push_back(_funcSupp[poIdx].size()); tmp->push_back(poIdx); 
+         tmp->push_back(_poFuncSupp[poIdx].size()); tmp->push_back(poIdx); 
          _outputGrp.push_back(tmp);
       }
    }
@@ -279,7 +279,7 @@ CirObj::initOutputGrp()
    for (vector<size_t>* itr : _outputGrp) {
       for (size_t i = 0 ; i < (*itr).size() ; i++) {
          if (i == 0) continue;
-         cout << _funcSupp[(*itr)[i]].size() << " ";
+         cout << _poFuncSupp[(*itr)[i]].size() << " ";
       }
       cout << endl;
    }
@@ -335,24 +335,6 @@ size_t
 CirPiGate::poToPiGateCount()
 {
    return 1;
-}
-
-
-size_t 
-CirObj::piToPoGateCount()
-{
-   size_t gateCount = 0;
-   for (CirPiGate* pi : _piList) {
-      gateCount = pi->piToPoGateCount();
-      cout << "pi name : " << pi->getName() 
-           << ", gate count = " << gateCount << endl;
-   }
-}
-
-size_t 
-CirObj::poToPiGateCount()
-{
-
 }
 
 size_t 

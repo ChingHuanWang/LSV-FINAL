@@ -58,12 +58,13 @@ SatSolver::addAmoCnf(vector<Var>& vars)
 void 
 SatSolver::addCirCNF(CirObj *cirObj, const int& dataLift)
 {
+    vector<CirPiGate*> piList = cirObj->getPiList();
+    vector<CirAigGate*> aigList = cirObj->getAigList();
+    vector<CirPoGate*> poList = cirObj->getPoList();
     Var vf, va, vb;
     vec<Lit> lits;
     Lit lf, la, lb;
-    size_t i0, i1, num = cirObj->getGateNum();
-    vector<CirAigGate*> aigList = cirObj->getAigList();
-    vector<CirPoGate*> poList = cirObj->getPoList();
+    size_t i0, i1, num = piList.size() + aigList.size() + poList.size();
 
     for (size_t i = 0; i < num; ++i)
         this->newVar();

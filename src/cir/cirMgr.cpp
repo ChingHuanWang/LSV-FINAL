@@ -13,6 +13,9 @@
 #include <cassert>
 #include <cstring>
 #include <algorithm>
+#include <sstream>
+#include <fstream>
+#include <string>
 #include "cirMgr.h"
 #include "cirGate.h"
 #include "util.h"
@@ -235,11 +238,129 @@ CirObj::readCircuit(const string& fileName)
 }
 
 bool
-CirMgr::readCircuit(const string& cirFile1, const string& cirFile2)
+CirObj::readBus(vector<vector<string>>& bus) {
+
+   unordered_map<string, size_t> piMap, poMap;
+   vector<size_t> tmpBus;
+   bool isPiBus;
+
+   // construct PI name to ID
+   for (size_t i = 0; i < _piList.size(); ++i)
+      piMap[_piList[i]->getName()] = _piList[i]->getId();
+
+   // construct PO name to ID
+   for (size_t i = 0; i < _poList.size(); ++i)
+      poMap[_poList[i]->getName()] = _poList[i]->getId();
+   
+   // construct _piBus and _poBus
+   for (size_t i = 0; i < bus.size(); ++i) {
+
+      tmpBus.resize(bus[i].size());
+      isPiBus = piMap.find(bus[i][0]) != piMap.end();
+
+      for (size_t j = 0; j < bus[i].size(); ++j)
+         tmpBus[j] = (isPiBus)? piMap[bus[i][j]]:poMap[bus[i][j]];
+      
+      if (isPiBus) _piBus.push_back(tmpBus);
+      else _poBus.push_back(tmpBus);
+      tmpBus.clear();
+   }
+
+   // ================== check for _piBus ==================
+   cout << "PI bus of circuit " << _objIdx << ":\n";
+   for (size_t i = 0; i < _piBus.size(); ++i) {
+      for (size_t j = 0; j < _piBus[i].size(); ++j) {
+         cout << _piBus[i][j] << " ";
+      }
+      cout << endl;
+   }
+   // ================== check for _piBus ==================
+
+   // ================== check for _poBus ==================
+   cout << "PO bus of circuit " << _objIdx << ":\n";
+   for (size_t i = 0; i < _poBus.size(); ++i) {
+      for (size_t j = 0; j < _poBus[i].size(); ++j) {
+         cout << _poBus[i][j] << " ";
+      }
+      cout << endl;
+   }
+   // ================== check for _poBus ==================
+   return true;
+}
+
+bool
+CirMgr::readCircuit(const string& input, const string& cirFile1, const string& cirFile2)
 {
    _const = new CirConstGate(0, 0);
    cirMgr->getCir(1)->readCircuit(cirFile1);
    cirMgr->getCir(2)->readCircuit(cirFile2);
+
+   // parse bus
+   ifstream inFile(input);
+   size_t busNum, portNum;
+   string line, portName;
+   stringstream ss("");
+   vector<string> bus;
+   vector<vector<string>> cir1Bus, cir2Bus;
+
+   // parse bus of circuit 1
+   getline(inFile, line); // get circuit file (circuit_1.v)
+   getline(inFile, line); // get circuit bus
+   busNum = stoi(line);
+   for (int i = 0 ; i < busNum; ++i) {
+      getline(inFile, line); // bus information
+      ss << line;
+      ss >> portNum;
+      for (int j = 0; j < portNum; ++j) {
+         ss >> portName;
+         bus.push_back(portName);
+      }
+      cir1Bus.push_back(bus);
+      bus.clear();
+      ss.clear();
+      ss.str("");
+   }
+   
+   // ================== check for cir1Bus ==================
+   // for (size_t i = 0; i < cir1Bus.size(); ++i) {
+   //    for (size_t j = 0; j < cir1Bus[i].size(); ++j) {
+   //       cout << cir1Bus[i][j] << " ";
+   //    }
+   //    cout << endl;
+   // }
+   // ================== check for cir1Bus ==================
+
+   // circuit 2
+   getline(inFile, line); // get circuit file (circuit_1.v)
+   getline(inFile, line); // get circuit bus
+   busNum = stoi(line);
+   for (int i = 0 ; i < busNum; ++i) {
+      getline(inFile, line); // bus information
+      ss << line;
+      ss >> portNum;
+      for (int j = 0; j < portNum; ++j) {
+         ss >> portName;
+         bus.push_back(portName);
+      }
+      cir2Bus.push_back(bus);
+      bus.clear();
+      ss.clear();
+      ss.str("");
+   }
+
+   // ================== check for cir1Bus ==================
+   // for (size_t i = 0; i < cir2Bus.size(); ++i) {
+   //    for (size_t j = 0; j < cir2Bus[i].size(); ++j) {
+   //       cout << cir2Bus[i][j] << " ";
+   //    }
+   //    cout << endl;
+   // }
+   // ================== check for cir1Bus ==================
+
+   cirMgr->getCir(1)->readBus(cir1Bus);
+   cirMgr->getCir(2)->readBus(cir2Bus);
+
+   return true;
 }
 
 /**********************************************************/
@@ -482,11 +603,9 @@ CirObj::getRedundant(vector<size_t>& input, vector<size_t>& output, vector<vecto
    // getchar();
    // ===== check input and output is correct =====
 
-   for (size_t i = 0; i < redundant.size(); ++i) {
-      for (size_t j = 0; j < _funcSupp[i].size(); ++j) {
-         redundant[i][_funcSupp[i][j] - 1] = false;
-      }
-   }
+   for (size_t i = 0; i < redundant.size(); ++i)
+      for (size_t j = 0; j < _poFuncSupp[i].size(); ++j)
+         redundant[i][_poFuncSupp[i][j] - 1] = false;
 
    SatSolver s;
    Var vf, va, vb;
@@ -509,26 +628,28 @@ CirObj::getRedundant(vector<size_t>& input, vector<size_t>& output, vector<vecto
    }
    
    for (size_t i = 0; i < output.size(); ++i) {
-      for (size_t j = 0; j < _funcSupp[i].size(); ++j) {
-         redundant[i][_funcSupp[i][j] - 1] = true;
+      for (size_t j = 0; j < _poFuncSupp[i].size(); ++j) {
+         redundant[i][_poFuncSupp[i][j] - 1] = true;
          s.assumeRelease();
          s.assumeProperty(vh[i], true);
          for (size_t k = 0; k < input.size(); ++k) {
             if (!redundant[i][k]) s.assumeProperty(k + 1, input[k]);
          }
-         if (s.assumpSolve()) redundant[i][_funcSupp[i][j] - 1] = false;
+         if (s.assumpSolve()) redundant[i][_poFuncSupp[i][j] - 1] = false;
       }
    }
 }
 
 void
-CirObj::collectFuncSupp() {
+CirObj::collectPoFuncSupp() {
+
+   if (_strucSupp.empty()) collectStrucSupp();
 
    Var vf, va, vb;
    Lit lf, la, lb;
    vec<Lit> lits;
    vector<Var> h(_piList.size(), 0), g(_poList.size(), 0);
-   size_t gateNum = _dfsList.size();
+   size_t gateNum = _piList.size() + _aigList.size() + _poList.size();
    SatSolver s;
    s.initialize();
    s.addCirCNF(this, 0);
@@ -563,7 +684,7 @@ CirObj::collectFuncSupp() {
       s.addCNF(lits); lits.clear();
    }
 
-   _funcSupp.resize(_poList.size());
+   _poFuncSupp.resize(_poList.size());
 
    for (size_t i = 0; i < _poList.size(); ++i) {
       vector<size_t> tmp;
@@ -575,43 +696,53 @@ CirObj::collectFuncSupp() {
             s.assumeProperty(h[k], k == (*gate)->getId() - 1);
          if (s.assumpSolve()) tmp.push_back((*gate)->getId());
       }
-      _funcSupp[i] = tmp;
+      _poFuncSupp[i] = tmp;
    }
+
+   // ========== check ==========
+   cout << "PO functional support of circuit " << _objIdx << ":\n";
+   for (size_t i = 0; i < _poFuncSupp.size(); ++i) {
+      for (size_t j = 0; j < _poFuncSupp[i].size(); ++j) {
+         cout << _poFuncSupp[i][j] << " ";
+      }
+      cout << endl;
+   }
+   // ========== check ==========
 }
 
 void
-CirObj::printFuncSupp() const {
+CirObj::printPoFuncSupp() const {
 
    cout << "functional support of cir " << _objIdx << ":\n";
-   for (size_t j = 0; j < _funcSupp.size(); ++j) {
-      cout << _funcSupp[j].size() << " ";
-      // for (size_t k = 0; k < _funcSupp[j].size(); ++k) {
-      //    cout << _funcSupp[j][k] << " ";
-      // }
+   for (size_t j = 0; j < _poFuncSupp.size(); ++j) {
+      cout << _poFuncSupp[j].size() << " ";
+      for (size_t k = 0; k < _poFuncSupp[j].size(); ++k) {
+         cout << _poFuncSupp[j][k] << " ";
+      }
       cout << endl;
    }
 }
 
 void
-CirObj::collectInvFuncSupp()
+CirObj::collectPiFuncSupp()
 {
-   _invFuncSupp.assign(_piList.size(), vector<size_t>(0, 0));
+   _piFuncSupp.assign(_piList.size(), vector<size_t>(0, 0));
    for (size_t i = 0 ; i < _poList.size() ; i++) {
-      for (size_t piId : _funcSupp[i]) {
+      for (size_t piId : _poFuncSupp[i]) {
          for (size_t j = 0 ; j < _piList.size() ; j++) {
             if (_piList[j]->getId() == piId) 
-               _invFuncSupp[j].push_back(_poList[i]->getId());
+               _piFuncSupp[j].push_back(_poList[i]->getId());
          }
       }
    }
 }
 
 void 
-CirObj::printInvFuncSupp() const
+CirObj::printPiFuncSupp() const
 {
    for (size_t i = 0 ; i < _piList.size() ; i++) {
       cout << "PI " << _piList[i]->getName() << " : ";
-      for (size_t poId : _invFuncSupp[i]) {
+      for (size_t poId : _piFuncSupp[i]) {
          cout << _idList[poId]->getName() << " ";
       }
       cout << endl;
@@ -621,7 +752,7 @@ CirObj::printInvFuncSupp() const
 void
 CirObj::collectSym() {
 
-   if (_funcSupp.empty()) collectFuncSupp();
+   if (_poFuncSupp.empty()) collectPoFuncSupp();
 
    Var vf, va, vb;
    Lit lf, la, lb;
@@ -669,24 +800,24 @@ CirObj::collectSym() {
 
    for (size_t i = 0; i < _poList.size(); ++i) {
       vector<vector<size_t>> symGroup;
-      vector<bool> grouped(_funcSupp[i].size(), false);
+      vector<bool> grouped(_poFuncSupp[i].size(), false);
 
-      for (size_t j = 0; j < _funcSupp[i].size(); ++j) {
+      for (size_t j = 0; j < _poFuncSupp[i].size(); ++j) {
          if (grouped[j]) continue;
 
-         vector<size_t> group = {_funcSupp[i][j]};
-         for (size_t k = j + 1; k < _funcSupp[i].size(); ++k) {
+         vector<size_t> group = {_poFuncSupp[i][j]};
+         for (size_t k = j + 1; k < _poFuncSupp[i].size(); ++k) {
             s.assumeRelease();
             for (size_t l = 0; l < _poList.size(); ++l)
                s.assumeProperty(g[l], l == i);
             for (size_t l = 0; l < _piList.size(); ++l) {
-               s.assumeProperty(h[l], (l == _funcSupp[i][j] - 1) || (l == _funcSupp[i][k] - 1));
-               if (l == _funcSupp[i][j] - 1) s.assumeProperty(_piList[l]->getId(), true);
-               else if (l == _funcSupp[i][k] - 1) s.assumeProperty(_piList[l]->getId(), false);
+               s.assumeProperty(h[l], (l == _poFuncSupp[i][j] - 1) || (l == _poFuncSupp[i][k] - 1));
+               if (l == _poFuncSupp[i][j] - 1) s.assumeProperty(_piList[l]->getId(), true);
+               else if (l == _poFuncSupp[i][k] - 1) s.assumeProperty(_piList[l]->getId(), false);
             }
 
             if (!s.assumpSolve()) {
-               group.push_back(_funcSupp[i][k]);
+               group.push_back(_poFuncSupp[i][k]);
                grouped[k] = true;
             }
          }
@@ -869,7 +1000,7 @@ CirObj::collectUnate()
       for (size_t i = 0 ; i < _poList.size() ; i++) {
 
          // (Va = Vb)+Vh = (Va + ~Vb + Vh)(~Va + Vb + Vh)
-         for (size_t piId : _funcSupp[i]) {
+         for (size_t piId : _poFuncSupp[i]) {
             va = _idList[piId]->getVar(); vb = va+dataLift; vh = vb+dataLift;
             la = Lit(va); lb = ~Lit(vb); lh = Lit(vh);
             lits.push(la); lits.push(lb); lits.push(lh);
@@ -881,7 +1012,7 @@ CirObj::collectUnate()
          }
 
          // solve sat
-         for (size_t piId : _funcSupp[i]) {
+         for (size_t piId : _poFuncSupp[i]) {
             _sat.assumeRelease();
             va = _idList[piId]->getVar(); vb = va+dataLift; vh = vb+dataLift;
             _sat.assumeProperty(va, false);
@@ -951,4 +1082,203 @@ CirObj::collectPoGateCount() {
    for (size_t i = 0; i < _poGateCount.size(); ++i)
       _poGateCount[i] = _poList[i]->poToPiGateCount();
    
+   // ========== check ==========
+   cout << "PO gate count of circuit " << _objIdx << ":\n";
+   for (size_t i = 0; i < _poList.size(); ++i) {
+      cout << _poGateCount[i] << " ";
+   }
+   cout << endl;
+   // ========== check ==========
+
+}
+
+void
+CirObj::collectPoOrder() {
+
+   size_t count = 0;
+   // ===== order PO according to =====
+   // 1. functional support size
+   // 2. TPI gate number
+
+   // step 1. generate index vector of PO
+   _poOrder.resize(_poList.size());
+   generate(_poOrder.begin(), _poOrder.end(), [&](){ return count++; });
+
+   // step 2. order PO
+   sort(_poOrder.begin(), _poOrder.end(), [&_poFuncSupp=_poFuncSupp, &_poGateCount=_poGateCount](size_t idx1, size_t idx2) {
+      if (_poFuncSupp[idx1].size() < _poFuncSupp[idx2].size()) return true;
+      if (_poFuncSupp[idx1].size() > _poFuncSupp[idx2].size()) return false;
+      return _poGateCount[idx1] < _poGateCount[idx2];
+   });
+
+   // step 3. re-order _poFuncSupp and _poGateCount
+   vector<size_t> newPoGateCount;
+   vector<vector<size_t>> newPoFuncSupp;
+   vector<CirPoGate*> newPoList;
+   newPoGateCount.resize(_poList.size());
+   newPoFuncSupp.resize(_poList.size());
+   for (size_t i = 0; i < _poList.size(); ++i) {
+      newPoGateCount[i] = _poGateCount[_poOrder[i]];
+      newPoFuncSupp[i] = _poFuncSupp[_poOrder[i]];
+      newPoList.push_back(_poList[_poOrder[i]]);
+   }
+   _poGateCount = newPoGateCount;
+   _poFuncSupp = newPoFuncSupp;
+   for (size_t i = 0; i < _poList.size(); ++i)
+      _poList[i] = newPoList[i];
+
+   // ========== check ==========
+   cout << "new PO order of circuit " << _objIdx << ":\n";
+   for (size_t i = 0; i < _poList.size(); ++i) {
+      cout << _poList[i]->getId() << " ";
+   }
+   cout << endl;
+   cout << "new PO functional support of circuit " << _objIdx << ":\n";
+   for (size_t i = 0; i < _poList.size(); ++i) {
+      for (size_t j = 0; j < _poFuncSupp[i].size(); ++j) {
+         cout << _poFuncSupp[i][j] << " ";
+      }
+      cout << endl;
+   }
+   cout << "new PO gate count of circuit " << _objIdx << ":\n";
+   for (size_t i = 0; i < _poList.size(); ++i) {
+      cout << _poGateCount[i] << " ";
+   }
+   cout << endl;
+   // ========== check ==========
+}
+
+void
+CirObj::collectPiOrder() {
+
+   size_t count = 0;
+   // ===== order PI according to =====
+   // 1. functional support size
+   // 2. TPO gate number
+
+   // step 1. generate index vector of PO
+   _piOrder.resize(_piList.size());
+   generate(_piOrder.begin(), _piOrder.end(), [&](){ return count++; });
+
+   // step 2. order PO
+   sort(_piOrder.begin(), _piOrder.end(), [&_piFuncSupp=_piFuncSupp, &_piGateCount=_piGateCount](size_t idx1, size_t idx2) {
+      if (_piFuncSupp[idx1].size() < _piFuncSupp[idx2].size()) return true;
+      if (_piFuncSupp[idx1].size() > _piFuncSupp[idx2].size()) return false;
+      return _piGateCount[idx1] < _piGateCount[idx2];
+   });
+
+   // step 3. re-order _poFuncSupp and _poGateCount
+   vector<size_t> newPiGateCount;
+   vector<vector<size_t>> newPiFuncSupp;
+   vector<CirPiGate*> newPiList;
+   newPiGateCount.resize(_piList.size());
+   newPiFuncSupp.resize(_piList.size());
+   for (size_t i = 0; i < _piList.size(); ++i) {
+      newPiGateCount[i] = _piGateCount[_piOrder[i]];
+      newPiFuncSupp[i] = _piFuncSupp[_piOrder[i]];
+      newPiList.push_back(_piList[_piOrder[i]]);
+   }
+   _piGateCount = newPiGateCount;
+   _piFuncSupp = newPiFuncSupp;
+   for (size_t i = 0; i < _piList.size(); ++i)
+      _piList[i] = newPiList[i];
+}
+
+void
+CirObj::reorderPoBus() {
+   
+   // construct mapping from PO ID -> funcSupp idx
+   unordered_map<size_t, size_t> map;
+   for (size_t i = 0; i < _poList.size(); ++i)
+      map[_poList[i]->getId()] = i;
+
+   // reorder _poBus
+   size_t count = 0;
+   vector<size_t> idx;
+   vector<double> avgFuncSuppSize;
+   idx.resize(_poBus.size());
+   generate(idx.begin(), idx.end(), [&](){ return count++; });
+
+   // calculate average functional support size of each bus and order
+   avgFuncSuppSize.resize(_poBus.size());
+   double avg;
+   for (size_t i = 0; i < _poBus.size(); ++i) {
+      avg = 0;
+      for (size_t j = 0; j < _poBus[i].size(); ++j)
+         avg += (double)_poFuncSupp[map[_poBus[i][j]]].size();
+      avg /= (double)_poBus[i].size();
+      avgFuncSuppSize[i] = avg;
+   }
+   sort(idx.begin(), idx.end(), [&](size_t idx1, size_t idx2) {
+      return avgFuncSuppSize[idx1] < avgFuncSuppSize[idx2];
+   });
+
+   vector<vector<size_t>> newPoBus;
+   newPoBus.resize(_poBus.size());
+   for (size_t i = 0; i < idx.size(); ++i)
+      newPoBus[i] = _poBus[idx[i]];
+   // for (size_t i = 0; i < newPoBus.size(); ++i)
+   //    for (size_t j = 0; j < newPoBus[i].size(); ++j)
+   //       newPoBus[i][j] = map[newPoBus[i][j]];
+   _poBus = newPoBus;
+
+   // ========== check ==========
+   cout << "new PO bus of circuit " << _objIdx << ":\n";
+   for (size_t i = 0; i < _poBus.size(); ++i) {
+      for (size_t j = 0; j < _poBus[i].size(); ++j) {
+         cout << _poBus[i][j] << " ";
+      }
+      cout << endl;
+   }
+   // ========== check ==========
+
+}
+
+void
+CirObj::reorderPiBus() {
+
+   // construct mapping from PO ID -> funcSupp idx
+   unordered_map<size_t, size_t> map;
+   for (size_t i = 0; i < _piList.size(); ++i)
+      map[_piList[i]->getId()] = i;
+
+   // reorder _poBus
+   size_t count = 0;
+   vector<size_t> idx;
+   vector<double> avgFuncSuppSize;
+   idx.resize(_piBus.size());
+   generate(idx.begin(), idx.end(), [&](){ return count++; });
+
+   // calculate average functional support size of each bus and order
+   avgFuncSuppSize.resize(_piBus.size());
+   double avg;
+   for (size_t i = 0; i < _piBus.size(); ++i) {
+      avg = 0;
+      for (size_t j = 0; j < _piBus[i].size(); ++j)
+         avg += (double)_piFuncSupp[map[_piBus[i][j]]].size();
+      avg /= (double)_piBus[i].size();
+      avgFuncSuppSize[i] = avg;
+   }
+   sort(idx.begin(), idx.end(), [&](size_t idx1, size_t idx2) {
+      return avgFuncSuppSize[idx1] < avgFuncSuppSize[idx2];
+   });
+
+   vector<vector<size_t>> newPiBus;
+   newPiBus.resize(_piBus.size());
+   for (size_t i = 0; i < idx.size(); ++i)
+      newPiBus[i] = _piBus[idx[i]];
+   // for (size_t i = 0; i < newPiBus.size(); ++i)
+   //    for (size_t j = 0; j < newPiBus[i].size(); ++j)
+   //       newPiBus[i][j] = map[newPiBus[i][j]];
+   _piBus = newPiBus;
+
+   // ========== check ==========
+   cout << "new PI bus of circuit " << _objIdx << ":\n";
+   for (size_t i = 0; i < _piBus.size(); ++i) {
+      for (size_t j = 0; j < _piBus[i].size(); ++j) {
+         cout << _piBus[i][j] << " ";
+      }
+      cout << endl;
+   }
+   // ========== check ==========
 }

@@ -1,5 +1,7 @@
 set(SOURCE_FILES
     match.cpp
+    outputSolver.cpp
+    inputSolver.cpp
 )
 
 add_library(match STATIC ${SOURCE_FILES})
