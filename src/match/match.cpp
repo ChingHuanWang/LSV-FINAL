@@ -407,7 +407,7 @@ void Match::outputSolverInit(vector<vector<Var>>& Mo, vector<vector<Var>>& Mi, v
                }
             }
             // cij + dij = 0 -> ~cij~dij
-            if (invFuncSupp[0][idx1].size() != invFuncSupp[1][idx2].size()) {
+            if (invFuncSupp[0][idx1].size() > invFuncSupp[1][idx2].size()) {
                lf = ~Lit(Mo[i][j*2]); lits.push(lf);
                _outputSolver.addCNF(lits); lits.clear();
                lf = ~Lit(Mo[i][j*2+1]); lits.push(lf);
@@ -579,9 +579,9 @@ void Match::solve() {
          cout << "unsat" << endl;
          cout << score << endl;
          if (proj) {
-            cout << "without bus\n";
-            cout << "paused to check: If there is no problem, please press Enter:\n";
-            getchar();
+            // cout << "without bus\n";
+            // cout << "paused to check: If there is no problem, please press Enter:\n";
+            // getchar();
             proj = false;
             _outputSolver.assumeRelease();
             _outputSolver.assumeProperty(withBus, proj);
@@ -590,7 +590,7 @@ void Match::solve() {
          else break;
       }
 
-      cout << "x = " << x << ", optimal = " << optimal << ", score = " << score << endl;
+      // cout << "x = " << x << ", optimal = " << optimal << ", score = " << score << endl;
       if (score <= optimal) continue;
 
       // printOutputSolverValue(outputMi, outputMo, Mbi, Mbo, withBus);
@@ -617,7 +617,7 @@ void Match::solve() {
       // if input solver unsat -> no counter example -> record the sol of MI/MO as final answer
       if (!_inputSolver.assumpSolve()) {
          optimal = score;
-         cout << "step:" << x << ", unsat, optimal = " << optimal << endl;
+         // cout << "step:" << x << ", unsat, optimal = " << optimal << endl;
          for (size_t j = 0; j < outputMo.size(); ++j) {
             for (size_t i = 0; i < outputMo[j].size(); ++i) {
                _resultMo[j][i] = _outputSolver.getValue(outputMo[j][i]);

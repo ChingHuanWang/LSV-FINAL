@@ -7,14 +7,15 @@
 #include "match.h"
 #include <ctime>
 #include <iomanip>
+#include <chrono>
 
 using namespace std;
+using namespace std::chrono;
 
 int main(int argc, char** argv)
 {
     Match *match = new Match;
     vector<string> cirFileList;
-    time_t start, end;
 
     match->parseInput(argv[1], cirFileList);
     cirMgr->readCircuit(cirFileList[0], cirFileList[1]);
@@ -38,20 +39,20 @@ int main(int argc, char** argv)
 
     vector<vector<size_t>> inv1 = cirMgr->getCir(1)->getInvFuncSupp();
     vector<vector<size_t>> inv2 = cirMgr->getCir(2)->getInvFuncSupp();
-    vector<size_t> inv1sum(cirMgr->getCir(1)->getPoNum(), 0);
-    vector<size_t> inv2sum(cirMgr->getCir(2)->getPoNum(), 0);
+    // vector<size_t> inv1sum(cirMgr->getCir(1)->getPoNum(), 0);
+    // vector<size_t> inv2sum(cirMgr->getCir(2)->getPoNum(), 0);
 
-    for (size_t i = 0 ; i < inv1.size() ; i++) {
-        inv1sum[inv1[i].size()-1]++;
-    }
+    // for (size_t i = 0 ; i < inv1.size() ; i++) {
+    //     inv1sum[inv1[i].size()-1]++;
+    // }
 
-    for (size_t i = 0 ; i < inv2.size() ; i++) {
-        inv2sum[inv2[i].size()-1]++;
-    }
+    // for (size_t i = 0 ; i < inv2.size() ; i++) {
+    //     inv2sum[inv2[i].size()-1]++;
+    // }
 
-    for (size_t i = 0 ; i < inv1sum.size() ; i++) {
-        cout << i+1 << " : " << inv1sum[i] << " " << inv2sum[i] << endl;
-    }
+    // for (size_t i = 0 ; i < inv1sum.size() ; i++) {
+    //     cout << i+1 << " : " << inv1sum[i] << " " << inv2sum[i] << endl;
+    // }
 
     // for (size_t i = 0 ; i < long1.size() ; i++) {
     //     cout << "max len = " << long1[i] << ", invsupp num = " << inv1[i].size() << endl;
@@ -85,10 +86,10 @@ int main(int argc, char** argv)
     // cirMgr->getCir(2)->collectInvFuncSupp();
 
     
-    // start = time(NULL);
-    // match->solve();
-    // end = time(NULL);
-    // double diff = difftime(end, start);
-    // cout << "solve time: " << setprecision(6) << fixed << diff << "s" << endl;
-    // match->printMatch();
+    auto start = high_resolution_clock::now();
+    match->solve();
+    auto end = high_resolution_clock::now();
+    auto diff = duration_cast<microseconds>(end - start);
+    cout << "solve time: " << setprecision(6) << fixed << diff.count() / 1e6 << "s" << endl;
+    match->printMatch();
 }
