@@ -824,6 +824,7 @@ void Match::write() {
             if (_resultMo[j][i] != 0) outFile << "2 + " << poList[1][j]->getName() << "\n";
             if (_resultMo[j][i + 1] != 0) outFile << "2 - " << poList[1][j]->getName() << "\n";
          }
+         outFile << "END\n";
       }
 
       // constant group
