@@ -1,4 +1,3 @@
-release/
 build/*
 *.o
 demo
