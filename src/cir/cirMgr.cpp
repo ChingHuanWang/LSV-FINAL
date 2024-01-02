@@ -839,12 +839,16 @@ CirObj::collectUnate()
 
    for (string unateType : choice) {
       // setting the var value of the circuit
-      for (size_t i = 0 ; i < _dfsList.size() ; i++)
-         _dfsList[i]->setVar(_sat.newVar());
+      for (size_t i = 0; i < _piList.size(); ++i)
+         _piList[i]->setVar(_sat.newVar());
+      for (size_t i = 0; i < _aigList.size(); ++i)
+         _aigList[i]->setVar(_sat.newVar());
+      for (size_t i = 0; i < _poList.size(); ++i)
+         _poList[i]->setVar(_sat.newVar());
 
       // datalift var num for finding unate var
-      int dataLift = _dfsList.size();
-      for (size_t i = 0 ; i < dataLift*2 ; i++)
+      int dataLift = _piList.size() + _aigList.size() + _poList.size();
+      for (size_t i = 0 ; i < dataLift * 2 ; i++)
          _sat.newVar();
 
       // gen aig cnf for f_a (i = 0), f_b (i = 1), f_h (i = 2)
@@ -919,6 +923,23 @@ CirObj::collectUnate()
       // reset _sat
       _sat.reset();
    }
+   vector<bool> count(_piList.size(), false);
+   for (size_t i = 0; i < _posUnateTable.size(); ++i) {
+      for (size_t j = 0; j < _posUnateTable[i].size(); ++j) {
+         count[_posUnateTable[i][j] - 1] = true;
+      }
+   }
+   for (size_t i = 0; i < _negUnateTable.size(); ++i) {
+      for (size_t j = 0; j < _negUnateTable[i].size(); ++j) {
+         count[_negUnateTable[i][j] - 1] = true;
+      }
+   }
+   size_t c = 0;
+   for (size_t i = 0; i < count.size(); ++i) {
+      c = (count[i])? c + 1:c;
+   }
+   cout << "total: " << c << "/" << _piList.size() << endl;
+
 }
 
 void 
