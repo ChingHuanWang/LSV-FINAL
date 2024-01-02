@@ -745,7 +745,6 @@ CirObj::printStrucSupp() const
 void
 CirObj::collectStrucSupp()
 {
-   
    CirGate::incrementGlobalRef();
    for (CirPoGate* g : _poList) {
       g->collectStrucSupp();
@@ -828,9 +827,8 @@ CirConstGate::collectStrucSupp()
 void
 CirObj::collectUnate()
 {
-   
-   _posUnateTable.assign(_poList.size(), vector<size_t>(0, 0));
-   _negUnateTable.assign(_poList.size(), vector<size_t>(0, 0));
+   _posUnateTable.resize(_poList.size(), vector<size_t>(0, 0));
+   _negUnateTable.resize(_poList.size(), vector<size_t>(0, 0));
    
    Var va, vb, vh;
    Lit la, lb, lh;

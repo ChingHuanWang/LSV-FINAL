@@ -33,13 +33,6 @@ int main(int argc, char** argv)
     cirMgr->getCir(2)->piLongestPath();
     // cirMgr->getCir(1)->poLongestPath();
     // cirMgr->getCir(2)->poLongestPath();
-    for (size_t i = 0; i < 2; ++i) {
-        // cirMgr->getCir(i + 1)->collectSym();
-        // cirMgr->getCir(i + 1)->printSym();
-        cirMgr->getCir(i + 1)->collectUnate();
-        // cirMgr->getCir(i + 1)->printUnate();
-    }
-    return 0;
     vector<size_t> long1 = cirMgr->getCir(1)->getPiLongestPathList();
     vector<size_t> long2 = cirMgr->getCir(2)->getPiLongestPathList();
 
