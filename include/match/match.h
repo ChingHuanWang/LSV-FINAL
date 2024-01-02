@@ -6,10 +6,9 @@
 
 class Match {
     public:
-        Match() {
+        Match(char* outFile):_outFile(outFile) {
             _outputSolver.initialize();
             _inputSolver.initialize();
-            _outFile = 0;
         }
 
         void parseInput(char*, vector<string>&);

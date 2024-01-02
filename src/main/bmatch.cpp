@@ -14,7 +14,7 @@ using namespace std::chrono;
 
 int main(int argc, char** argv)
 {
-    Match *match = new Match;
+    Match *match = new Match(argv[2]);
     vector<string> cirFileList;
 
     match->parseInput(argv[1], cirFileList);
@@ -91,5 +91,5 @@ int main(int argc, char** argv)
     auto end = high_resolution_clock::now();
     auto diff = duration_cast<microseconds>(end - start);
     cout << "solve time: " << setprecision(6) << fixed << diff.count() / 1e6 << "s" << endl;
-    match->printMatch();
+    // match->printMatch();
 }

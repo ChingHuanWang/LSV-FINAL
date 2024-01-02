@@ -558,7 +558,7 @@ void Match::solve() {
 
    _K = poNum[1] + 1;
    _optimal = (_K + 1) * poNum[1];
-   cout << "_K = " << _K << ", _optimal = " << _optimal << endl;
+   // cout << "_K = " << _K << ", _optimal = " << _optimal << endl;
    // cout << "gateNum: " <<  gateNum[0] << " " << gateNum[1] << endl;
 
    // ================== solve ==================
@@ -792,31 +792,52 @@ void Match::printInputSolverValue(vector<vector<Var>>& Mi, vector<vector<Var>>& 
 
 void Match::write() {
 
-   cout << "optimal = " << _optimal << endl;
-   cout << "final mapping result:" << endl;
-   cout << "output:" << endl;
-   cout << "po size = " << (_resultMo[0].size()-2) / 2 << " " << _resultMo.size() << endl;
-   cout << "pi size = " << (_resultMi[0].size()-2) / 2 << " " << _resultMi.size() << endl;
+   // cout << "optimal = " << _optimal << endl;
+   // cout << "final mapping result:" << endl;
+   // cout << "output:" << endl;
+   // cout << "po size = " << (_resultMo[0].size()-2) / 2 << " " << _resultMo.size() << endl;
+   // cout << "pi size = " << (_resultMi[0].size()-2) / 2 << " " << _resultMi.size() << endl;
 
-   return;
-   for (size_t j = 0; j < _resultMo.size(); ++j) {
-      for (size_t i = 0; i < _resultMo[j].size(); ++i) {
-         cout << _resultMo[j][i] << " ";
-      }
-      cout << endl;
+   ofstream outFile;
+   outFile.open(_outFile);
+   vector<CirPiGate*> piList[2];
+   vector<CirPoGate*> poList[2];
+   for (size_t i = 0; i < 2; ++i) {
+      piList[i] = cirMgr->getCir(i + 1)->getPiList();
+      poList[i] = cirMgr->getCir(i + 1)->getPoList();
    }
-   cout << endl;
+   if (outFile.is_open()) {
 
-   cout << "input:" << endl;
-   for (size_t j = 0; j < _resultMi.size(); ++j) {
-      for (size_t i = 0; i < _resultMi[j].size(); ++i) {
-         cout << _resultMi[j][i] << " ";
+      // ingroup
+      for (size_t i = 0; i < _resultMi[0].size() - 2; i += 2) {
+         outFile << "INGROUP\n1 + " << piList[0][i / 2]->getName() << "\n";
+         for (size_t j = 0; j < _resultMi.size(); ++j) {
+            if (_resultMi[j][i] != 0) outFile << "2 + " << piList[1][j]->getName() << "\n";
+            if (_resultMi[j][i + 1] != 0) outFile << "2 - " << piList[1][j]->getName() << "\n";
+         }
+         outFile << "END\n";
       }
-      cout << endl;
-   }
-   cout << endl;
+      // outgroup
+      for (size_t i = 0; i < _resultMo[0].size(); i += 2) {
+         outFile << "OUTGROUP\n1 + " << poList[0][i / 2]->getName() << "\n";
+         for (size_t j = 0; j < _resultMo.size(); ++j) {
+            if (_resultMo[j][i] != 0) outFile << "2 + " << poList[1][j]->getName() << "\n";
+            if (_resultMo[j][i + 1] != 0) outFile << "2 - " << poList[1][j]->getName() << "\n";
+         }
+      }
 
-   // Todo: write file
+      // constant group
+      outFile << "CONSTGROUP\n";
+      for (size_t j = 0; j < _resultMi.size(); ++j) {
+         if (_resultMi[j][_resultMi[0].size() - 2] != 0) outFile << "+ " << piList[1][j]->getName() << "\n";
+         if (_resultMi[j][_resultMi[0].size() - 1] != 0) outFile << "- " << piList[1][j]->getName() << "\n";
+      }
+      outFile << "END\n";
+   }
+   else {
+      cerr << _outFile << " cannot open.\n";
+   }
+   outFile.close();
 }
 
 
