@@ -512,11 +512,13 @@ CirObj::getRedundant(vector<size_t>& input, vector<size_t>& output, vector<vecto
 void
 CirObj::collectFuncSupp() {
 
+   if (_strucSupp.empty()) collectStrucSupp();
+
    Var vf, va, vb;
    Lit lf, la, lb;
    vec<Lit> lits;
    vector<Var> h(_piList.size(), 0), g(_poList.size(), 0);
-   size_t gateNum = _dfsList.size();
+   size_t gateNum = _piList.size() + _aigList.size() + _poList.size();
    SatSolver s;
    s.initialize();
    s.addCirCNF(this, 0);
@@ -611,11 +613,18 @@ CirObj::collectSym() {
 
    if (_funcSupp.empty()) collectFuncSupp();
 
+   // for (size_t i = 0; i < _funcSupp.size(); ++i) {
+   //    for (size_t j = 0; j < _funcSupp[i].size(); ++j) {
+   //       cout << _funcSupp[i][j] << " ";
+   //    }
+   //    cout << endl;
+   // }
+
    Var vf, va, vb;
    Lit lf, la, lb;
    vec<Lit> lits;
    vector<Var> h(_piList.size(), 0), g(_poList.size(), 0);
-   size_t gateNum = _dfsList.size();
+   size_t gateNum = _piList.size() + _aigList.size() + _poList.size();
    SatSolver s;
    
    s.initialize();
@@ -630,7 +639,7 @@ CirObj::collectSym() {
    // h[i] = 0 => x[i] == y[i]
    // h[i] = 1 => x[i] != y[i]
    for (size_t i = 0; i < h.size(); ++i) {
-      vf = h[i]; lf = ~Lit(vf);
+      vf = h[i]; lf = Lit(vf);
       va = _piList[i]->getId(); la = Lit(va);
       vb = va + gateNum; lb = Lit(vb);
       lits.push(lf); lits.push(la); lits.push(~lb);
@@ -658,32 +667,51 @@ CirObj::collectSym() {
    for (size_t i = 0; i < _poList.size(); ++i) {
       vector<vector<size_t>> symGroup;
       vector<bool> grouped(_funcSupp[i].size(), false);
+      sort(_funcSupp[i].begin(), _funcSupp[i].end());
 
       for (size_t j = 0; j < _funcSupp[i].size(); ++j) {
          if (grouped[j]) continue;
 
-         vector<size_t> group = {_funcSupp[i][j]};
+         vector<size_t> group = {_funcSupp[i][j] - 1};
          for (size_t k = j + 1; k < _funcSupp[i].size(); ++k) {
             s.assumeRelease();
+            s.assumeProperty(_piList[_funcSupp[i][j] - 1]->getId(), true);
+            s.assumeProperty(_piList[_funcSupp[i][k] - 1]->getId(), false);
             for (size_t l = 0; l < _poList.size(); ++l)
                s.assumeProperty(g[l], l == i);
             for (size_t l = 0; l < _piList.size(); ++l) {
-               s.assumeProperty(h[l], (l == _funcSupp[i][j] - 1) || (l == _funcSupp[i][k] - 1));
-               if (l == _funcSupp[i][j] - 1) s.assumeProperty(_piList[l]->getId(), true);
-               else if (l == _funcSupp[i][k] - 1) s.assumeProperty(_piList[l]->getId(), false);
+               s.assumeProperty(h[l], (l == (_funcSupp[i][j] - 1)) || (l == (_funcSupp[i][k] - 1)));
             }
 
             if (!s.assumpSolve()) {
-               group.push_back(_funcSupp[i][k]);
+               group.push_back(_funcSupp[i][k] - 1);
                grouped[k] = true;
             }
          }
          grouped[j] = true;
-
-         symGroup.push_back(group);
+         if (group.size() > 1)
+            symGroup.push_back(group);
+         group.clear();
       }
       _sym[i] = symGroup;
    }
+
+   cout << "symmetry group\n";
+   vector<bool> count(_piList.size(), false);
+   for (size_t i = 0; i < _sym.size(); ++i) {
+      for (size_t j = 0; j < _sym[i].size(); ++j) {
+         for (size_t k = 0; k < _sym[i][j].size(); ++k) {
+            count[_sym[i][j][k]] = true;
+         }
+      }
+   }
+
+   size_t c = 0;
+   for (size_t i = 0; i < count.size(); ++i) {
+      c = (count[i])? c + 1:c;
+   }
+   cout << "total: " << c << "/" << _piList.size() << endl;
+
 }
 
 void
