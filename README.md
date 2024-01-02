@@ -18,3 +18,7 @@ Usage of bmatch executable
 ```
 
 ## File Structure
+1. The document "report.pdf" comprises our detailed report outlining the methodology and presenting our experimental results.
+2. "11_demo.pptx" is the updated slides.
+3. Within the "references" folder, there are two subfolders: "benchmark," consisting of the experiment benchmark, and "papers," containing reference papers.
+4. The remaining section contains the source code for implementation.
