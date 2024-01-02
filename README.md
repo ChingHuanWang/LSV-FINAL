@@ -14,7 +14,7 @@ make -j20
 ```
 Usage of bmatch executable
 ```
-./bmatch <input file> <output file> // Example ./bmatch ./reference/benchmark/release/case01/input ./match01.out
+./bmatch <input file> <output file> // Example ./bmatch ../reference/benchmark/release/case01/input ./match01.out
 ```
 
 ## File Structure

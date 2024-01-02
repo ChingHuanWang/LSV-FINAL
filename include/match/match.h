@@ -6,7 +6,7 @@
 
 class Match {
     public:
-        Match(char* outFile):_outFile(outFile) {
+        Match(char* outFile="./match.out"):_outFile(outFile) {
             _outputSolver.initialize();
             _inputSolver.initialize();
         }
